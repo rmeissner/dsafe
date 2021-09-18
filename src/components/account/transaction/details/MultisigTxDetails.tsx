@@ -2,30 +2,9 @@ import React from 'react'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import { MultisigTx } from 'safe-indexer-ts'
-import { styled } from '@mui/system';
 import { Typography } from '@mui/material';
-
-
-const Group = styled('div')(({ theme }) => ({
-    display: 'flex',
-    flexDirection: 'column'
-}))
-
-const Header = styled('div')(({ theme }) => ({
-    textAlign: 'start'
-}))
-
-const Entry = styled('div')(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    paddingBottom: 16
-}))
-
-const LongText = styled(Typography)(({ theme }) => ({
-    width: '100%',
-    textAlign: 'start',
-    wordWrap: 'break-word'
-}))
+import { Entry, Group, Header, LongText } from '../../../../styled/tables';
+import TxEvents from './TxEvents';
 
 export interface Props {
     transaction: MultisigTx
@@ -69,8 +48,9 @@ export const MultisigTxDetails: React.FC<Props> = ({ transaction }) => {
                 </Entry>
             </Group>
         ) : (
-            <Entry>Loading details...</Entry>
+            <Entry>No details available</Entry>
         )}
+        <TxEvents interactions={transaction.logs} />
     </Group>
 }
 

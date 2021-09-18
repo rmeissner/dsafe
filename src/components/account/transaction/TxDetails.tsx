@@ -6,6 +6,7 @@ import { InteractionsDB } from '../../../logic/db/interactions'
 import { useAccount } from '../Account'
 import ModuleTxDetails from './details/ModuleTxDetails'
 import MultisigTxDetails from './details/MultisigTxDetails'
+import TransferTxDetails from './details/TransferTxDetails'
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -22,6 +23,8 @@ const renderDetails = (interaction?: SafeInteraction): ReactElement => {
             return (<MultisigTxDetails transaction={interaction} />)
         case "module_transaction":
             return (<ModuleTxDetails transaction={interaction} />)
+        case "transfer":
+            return (<TransferTxDetails transaction={interaction} />)
         default: 
             return (<>"Loading..."</>)
     }

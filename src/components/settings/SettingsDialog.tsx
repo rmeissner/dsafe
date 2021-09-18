@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogContent, DialogTitle, TextField, Typography } from '@mui/material'
+import { Button, Dialog, DialogContent, DialogTitle, Switch, TextField, Typography } from '@mui/material'
 import React from 'react'
 import { useAppSettings } from '../provider/AppSettingsProvider'
 
@@ -9,12 +9,13 @@ export interface Props {
 }
 
 export const SettingsDialog: React.FC<Props> = ({open, reindex, handleClose}) => {
-    const { rpc, updateRpc } = useAppSettings()
-    return <Dialog open={open} onClose={handleClose}>
+    const { useCustomRpc, toggleCustomRpc, customRpc, updateCustomRpc } = useAppSettings()
+    return <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
         <DialogTitle>Settings</DialogTitle>
         <DialogContent>
             <Typography variant="caption">App Settings</Typography><br />
-            <TextField label="RPC" onChange={(e) => updateRpc(e.target.value)} value={rpc} /><br /><br />
+            Use custom prc endpoint <Switch checked={useCustomRpc} onChange={(_, checked) => toggleCustomRpc(checked) } /><br /><br />
+            <TextField label="RPC" onChange={(e) => updateCustomRpc(e.target.value)} value={customRpc} fullWidth /><br /><br />
             {
                 !!reindex && (<>
                     <Typography variant="caption">Account Settings</Typography><br />

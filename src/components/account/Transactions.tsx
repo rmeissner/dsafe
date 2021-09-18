@@ -17,7 +17,7 @@ const Root = styled('div')(({ theme }) => ({
 function Transactions() {
   const match = useRouteMatch()
   const history = useHistory()
-  const { rpc } = useAppSettings()
+  const { provider } = useAppSettings()
   const { address: account } = useAccount()
   const callbackProxy = useMemo<{ current?: Callback }>(() => { return {} }, [])
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
@@ -45,9 +45,9 @@ function Transactions() {
   }, [setSelectedId])
 
   const indexer = useMemo(() => {
-    if (rpc.trim().length == 0) return
+    if (!provider) return
     if (!account || account.trim().length == 0) return
-    const indexer = getIndexer(account, rpc, (e) => {
+    const indexer = getIndexer(account, provider, (e) => {
       console.log(e)
       callbackProxy?.current?.onNewInteractions(e)
       e.forEach((i) => {
@@ -55,7 +55,7 @@ function Transactions() {
       })
     })
     return indexer
-  }, [callbackProxy, account, rpc, db])
+  }, [callbackProxy, account, provider, db])
 
   useEffect(() => {
     indexer?.start().catch((e: any) => console.error(e))

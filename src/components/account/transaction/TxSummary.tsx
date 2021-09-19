@@ -1,19 +1,28 @@
-import React, { ReactElement } from 'react'
+import React from 'react'
 import { SafeInteraction } from 'safe-indexer-ts'
+import TransferTxSummary from './summary/TransferTxSummary'
 
 export interface Props {
     interaction: SafeInteraction,
-    showDetails?: (id: string) => void
+    showDetails?: (id: string) => void,
+    hideDate?: boolean
 }
-export const TxSummary: React.FC<Props> = ({ interaction, showDetails }) => {
+export const TxSummary: React.FC<Props> = ({ interaction, showDetails, hideDate }) => {
     switch (interaction.type) {
         case "multisig_transaction":
         case "module_transaction":
-        case "transfer":
+        case "setup":
+        case "settings":
             return <div onClick={() => showDetails?.(interaction.id)}>
                 {`${interaction.type} - ${interaction.id}`}<br />
-                {`${new Date(interaction.timestamp * 1000)}`}<br />
+                {!hideDate ? `${new Date(interaction.timestamp * 1000)}` : ""}<br />
                 <br />
+            </div>
+        case "transfer":
+            return <TransferTxSummary transfer={interaction} hideDate={hideDate} />
+        default:
+            return <div>
+                Unknown Interaction
             </div>
     }
 }

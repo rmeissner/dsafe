@@ -20,7 +20,7 @@ export const TxEvents: React.FC<Props> = ({ interactions }) => {
         <Header>Events:</Header>
         <Group>
             {interactions.map((e) => (<Entry>
-                {e.interaction ? <TxSummary interaction={e.interaction} /> : eventSummary(e.event)}
+                {e.interaction ? <TxSummary interaction={e.interaction} hideDate /> : eventSummary(e.event)}
             </Entry>))}
         </Group>
     </>

@@ -1,6 +1,6 @@
 
 import { ethers, providers } from 'ethers';
-import { EthersLoader, EthersParser, IncomingEthEventSource, IncomingTransferEventSource, ModuleTransactionEventSource, MultisigTransactionEventSource, OutgoingTransferEventSource, SafeIndexer, SafeInteraction } from 'safe-indexer-ts'
+import { EthersLoader, EthersParser, IncomingEthEventSource, IncomingTransferEventSource, ModuleTransactionEventSource, MultisigTransactionEventSource, OutgoingTransferEventSource, SafeIndexer, SafeInteraction, SettingsChangeEventSource } from 'safe-indexer-ts'
 import { NetworkConfig } from '../../components/provider/AppSettingsProvider';
 import { IndexerState } from '../state/indexer';
 
@@ -10,7 +10,8 @@ export const getIndexer = (safe: string, provider: providers.Provider, networkCo
         new ModuleTransactionEventSource(provider), 
         new IncomingTransferEventSource(provider), 
         new OutgoingTransferEventSource(provider), 
-        new IncomingEthEventSource(provider)
+        new IncomingEthEventSource(provider), 
+        new SettingsChangeEventSource(provider)
     ])
     const parser = new EthersParser(provider)
     const callback = {

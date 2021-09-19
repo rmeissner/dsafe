@@ -12,6 +12,10 @@ export interface Props {
 
 export const ModuleTxDetails: React.FC<Props> = ({ transaction }) => {
     return <Group>
+        <Header>Date:</Header>
+        <Entry>
+            <Typography>{new Date(transaction.timestamp * 1000).toUTCString()}</Typography>
+        </Entry>
         <Header>Status:</Header>
         <Entry>
             {transaction.success ? (

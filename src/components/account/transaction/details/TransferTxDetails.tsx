@@ -47,6 +47,10 @@ const renderDetails = (details: TransferDetails): ReactElement => {
 
 export const TransferTxDetails: React.FC<Props> = ({ transaction }) => {
     return <Group>
+        <Header>Date:</Header>
+        <Entry>
+            <Typography>{new Date(transaction.timestamp * 1000).toUTCString()}</Typography>
+        </Entry>
         <Header>From:</Header>
         <Entry>
             <Typography>{transaction.sender}</Typography>

@@ -26,7 +26,7 @@ const renderDetails = (interaction?: SafeInteraction): ReactElement => {
         case "transfer":
             return (<TransferTxDetails transaction={interaction} />)
         default: 
-            return (<>"Loading..."</>)
+            return (<>"Unknown details"</>)
     }
 }
 

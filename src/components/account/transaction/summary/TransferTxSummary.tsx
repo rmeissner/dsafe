@@ -14,7 +14,7 @@ export const TransferTxSummary: React.FC<Props> = ({ transfer, hideDate }) => {
             {`${transfer.direction} ${transfer.details.type} Transfer`}
         </Entry>
         {!hideDate && (
-            <Entry style={{textAlign: "center"}}>
+            <Entry style={{paddingBottom: 0}}>
                  {new Date(transfer.timestamp * 1000).toUTCString()}
             </Entry>
         )}

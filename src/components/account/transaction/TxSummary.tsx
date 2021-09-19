@@ -1,5 +1,6 @@
 import React from 'react'
 import { SafeInteraction } from 'safe-indexer-ts'
+import SettingsTxSummary from './summary/SettingsTxSummary'
 import TransferTxSummary from './summary/TransferTxSummary'
 
 export interface Props {
@@ -12,14 +13,15 @@ export const TxSummary: React.FC<Props> = ({ interaction, showDetails, hideDate 
         case "multisig_transaction":
         case "module_transaction":
         case "setup":
-        case "settings":
             return <div onClick={() => showDetails?.(interaction.id)}>
-                {`${interaction.type} - ${interaction.id}`}<br />
-                {!hideDate ? `${new Date(interaction.timestamp * 1000)}` : ""}<br />
+                {`${interaction.type}`}<br />
+                {!hideDate ? `${new Date(interaction.timestamp * 1000).toUTCString()}` : ""}<br />
                 <br />
             </div>
+        case "settings":
+            return <SettingsTxSummary settingsChange={interaction} hideDate={hideDate} showDetails={showDetails} />
         case "transfer":
-            return <TransferTxSummary transfer={interaction} hideDate={hideDate} />
+            return <TransferTxSummary transfer={interaction} hideDate={hideDate} showDetails={showDetails} />
         default:
             return <div>
                 Unknown Interaction

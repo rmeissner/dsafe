@@ -19,42 +19,66 @@ function Transactions() {
   const match = useRouteMatch()
   const history = useHistory()
   const { provider, networkConfig } = useAppSettings()
-  const { address: account } = useAccount()
+  const account = useAccount()
   const callbackProxy = useMemo<{ current?: Callback }>(() => { return {} }, [])
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1)
   const [txs, setTxs] = useState<SafeInteraction[]>([])
+  const [status, setStatus] = useState<string>("")
   const [showSettings, setShowSettings] = useState<boolean>(false)
 
   useEffect(() => {
     callbackProxy.current = {
       onNewInteractions: (newTxs) => {
         setTxs(newTxs.concat(txs))
+      },
+      onStatusUpdate: (update) => {
+        switch (update.type) {
+          case "up_to_date":
+            setStatus(`Up to date with block ${update.latestBlock}`)
+            break;  
+          case "processing":
+            setStatus(`Indexing block ${update.fromBlock}/${update.latestBlock}`)
+            break;
+          case "aborted":
+            setStatus(`Indexing aborted: ${update.reason}`)
+            break;
+          default:
+            setStatus("")
+            break;
+        }
       }
     }
     return () => callbackProxy.current = undefined
-  }, [callbackProxy, txs, setTxs])
+  }, [callbackProxy, txs, setTxs, setStatus])
 
   useEffect(() => {
     // Reset id if account changes
     setSelectedId(undefined)
   }, [account])
 
-  const db = useMemo(() => { return new InteractionsDB(account) }, [account])
+  const db = useMemo(() => { 
+    return new InteractionsDB(account.id) 
+  }, [account])
 
-  const showDetails = useCallback(async (id) => {
+  const showDetails = useCallback(async (id, index) => {
+    setSelectedIndex(index)
     setSelectedId(id)
   }, [setSelectedId])
 
   const indexer = useMemo(() => {
     if (!provider) return
-    if (!account || account.trim().length == 0) return
-    const indexer = getIndexer(account, provider, networkConfig, (e) => {
-      console.log(e)
-      callbackProxy?.current?.onNewInteractions(e)
-      e.forEach((i) => {
-        db.add(i)
-      })
-    })
+    if (!account || account.address.trim().length == 0) return
+    const callback: Callback = {
+      onNewInteractions: (interactions) => {
+        callbackProxy?.current?.onNewInteractions(interactions)
+        interactions.forEach((interaction) => { db.add(interaction) })
+      },
+      onStatusUpdate: (update) => {
+        callbackProxy?.current?.onStatusUpdate?.(update)
+      }
+    }
+    const indexer = getIndexer(account, provider, networkConfig, callback)
     return indexer
   }, [callbackProxy, account, provider, db, networkConfig])
 
@@ -70,19 +94,27 @@ function Transactions() {
     (indexer.state as IndexerState).reset();
     db.getAll().then((loaded) => setTxs(loaded))
     indexer.resume();
-  }, [indexer, db])
+    setStatus("Waiting for reindexing")
+  }, [indexer, db, setStatus])
 
   useEffect(() => {
     setTxs([])
     db.getAll().then((loaded) => setTxs(loaded))
   }, [db, setTxs])
 
+  const details = useMemo(() => {
+    return <TxDetails id={selectedId} handleClose={() => setSelectedId(undefined)} />
+  }, [selectedId, setSelectedId])
+
   return (
     <Root>
-      <Button onClick={() => setShowSettings(true)}>Settings</Button>
-      {txs.map((e) => <TxSummary interaction={e} showDetails={showDetails} />)}
+      <>
+        {status}
+        <Button onClick={() => setShowSettings(true)}>Settings</Button>
+      </>
+      {txs.map((e, index) => <TxSummary interaction={e} showDetails={(id) => showDetails(id, index)} />)}
       <SettingsDialog open={showSettings} handleClose={() => setShowSettings(false)} reindex={reindex} />
-      <TxDetails id={selectedId} handleClose={() => setSelectedId(undefined)} />
+      {details}
     </Root>
   );
 }

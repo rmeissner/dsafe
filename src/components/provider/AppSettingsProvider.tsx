@@ -26,7 +26,7 @@ export const useAppSettings = () => {
     return appSettings
 }
 
-export const AppSettingsProvider: React.FC = ({children}) => {
+export const AppSettingsProvider: React.FC = ({ children }) => {
     const [useCustomRpc, setUseCustomRpc] = useState(localStorage.getItem("app_state_use_rpc") === "true")
     const [customRpc, setCustomRpc] = useState(localStorage.getItem("app_state_rpc") || "")
     const storedConfig = localStorage.getItem("app_state_network_config")
@@ -38,7 +38,7 @@ export const AppSettingsProvider: React.FC = ({children}) => {
     const updateCustomRpc = (value: string) => {
         localStorage.setItem("app_state_rpc", value)
         setCustomRpc(value)
-    } 
+    }
     const updateNetworkConfig = (value: NetworkConfig) => {
         const serialized = JSON.stringify({
             maxBlocks: value.maxBlocks || 100,
@@ -46,8 +46,8 @@ export const AppSettingsProvider: React.FC = ({children}) => {
         })
         localStorage.setItem("app_state_network_config", serialized)
         setNetworkConfig(value)
-    } 
-    const provider = useMemo(() => { 
+    }
+    const provider = useMemo(() => {
         if (useCustomRpc) {
             if (!customRpc) return undefined
             return new ethers.providers.JsonRpcProvider(customRpc); // "https://bsc-dataseed1.ninicoin.io" 

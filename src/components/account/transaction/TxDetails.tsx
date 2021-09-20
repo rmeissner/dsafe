@@ -31,9 +31,9 @@ const renderDetails = (interaction?: SafeInteraction): ReactElement => {
 }
 
 export const TxDetails: React.FC<Props> = ({ id, handleClose }) => {
-    const { address: account } = useAccount()
+    const account = useAccount()
     const [interaction, setInteraction] = useState<SafeInteraction | undefined>(undefined)
-    const db = useMemo(() => { return new InteractionsDB(account) }, [account])
+    const db = useMemo(() => { return new InteractionsDB(account.id) }, [account])
     useEffect(() => {
         setInteraction(undefined)
         if (!id) return

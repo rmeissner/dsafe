@@ -1,10 +1,11 @@
 
-import { ethers, providers } from 'ethers';
-import { EthersLoader, EthersParser, IncomingEthEventSource, IncomingTransferEventSource, ModuleTransactionEventSource, MultisigTransactionEventSource, OutgoingTransferEventSource, SafeIndexer, SafeInteraction, SettingsChangeEventSource } from 'safe-indexer-ts'
+import { providers } from 'ethers';
+import { Callback, EthersLoader, EthersParser, IncomingEthEventSource, IncomingTransferEventSource, ModuleTransactionEventSource, MultisigTransactionEventSource, OutgoingTransferEventSource, SafeIndexer, SafeInteraction, SettingsChangeEventSource } from 'safe-indexer-ts'
+import Account from '../../components/account/Account';
 import { NetworkConfig } from '../../components/provider/AppSettingsProvider';
 import { IndexerState } from '../state/indexer';
 
-export const getIndexer = (safe: string, provider: providers.Provider, networkConfig: NetworkConfig, onNewInteractions: (interactions: SafeInteraction[]) => void): SafeIndexer => {
+export const getIndexer = (account: Account, provider: providers.Provider, networkConfig: NetworkConfig, callback: Callback): SafeIndexer => {
     const loader = new EthersLoader(provider, [
         new MultisigTransactionEventSource(provider), 
         new ModuleTransactionEventSource(provider), 
@@ -14,9 +15,6 @@ export const getIndexer = (safe: string, provider: providers.Provider, networkCo
         new SettingsChangeEventSource(provider)
     ])
     const parser = new EthersParser(provider)
-    const callback = {
-        onNewInteractions
-    }
-    const state = new IndexerState(safe, networkConfig.startingBlock)
-    return new SafeIndexer(state, loader, parser, callback, { safe, maxBlocks: networkConfig.maxBlocks, logger: console })
+    const state = new IndexerState(account.id, networkConfig.startingBlock)
+    return new SafeIndexer(state, loader, parser, callback, { chainId: account.chainId, safe: account.address, maxBlocks: networkConfig.maxBlocks, logger: console })
 }

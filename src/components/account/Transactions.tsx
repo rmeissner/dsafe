@@ -1,34 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Callback, SafeInteraction } from 'safe-indexer-ts';
 import { Button, styled } from '@mui/material';
-import { InteractionsDB } from '../../logic/db/interactions';
-import { getIndexer } from '../../logic/utils/indexer';
-import { IndexerState } from '../../logic/state/indexer';
-import { useHistory, useRouteMatch } from 'react-router';
 import { useAccount } from './Account';
-import { useAppSettings } from '../provider/AppSettingsProvider';
 import SettingsDialog from '../settings/SettingsDialog';
 import TxDetails from './transaction/TxDetails';
 import TxSummary from './transaction/TxSummary';
+import { useTransactionRepo } from '../provider/TransactionRepositoryProvider';
 
 const Root = styled('div')(({ theme }) => ({
   textAlign: "center"
 }))
 
 function Transactions() {
-  const match = useRouteMatch()
-  const history = useHistory()
-  const { provider, networkConfig } = useAppSettings()
   const account = useAccount()
-  const callbackProxy = useMemo<{ current?: Callback }>(() => { return {} }, [])
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
-  const [selectedIndex, setSelectedIndex] = useState<number>(-1)
   const [txs, setTxs] = useState<SafeInteraction[]>([])
   const [status, setStatus] = useState<string>("")
   const [showSettings, setShowSettings] = useState<boolean>(false)
+  const accountRepo = useTransactionRepo()
 
   useEffect(() => {
-    callbackProxy.current = {
+    const callback: Callback = {
       onNewInteractions: (newTxs) => {
         setTxs(newTxs.concat(txs))
       },
@@ -49,58 +41,30 @@ function Transactions() {
         }
       }
     }
-    return () => callbackProxy.current = undefined
-  }, [callbackProxy, txs, setTxs, setStatus])
+    accountRepo.registerCallback(callback)
+    return () => accountRepo.unregisterCallback(callback)
+  }, [accountRepo, txs, setTxs, setStatus])
 
   useEffect(() => {
     // Reset id if account changes
     setSelectedId(undefined)
   }, [account])
 
-  const db = useMemo(() => { 
-    return new InteractionsDB(account.id) 
-  }, [account])
-
-  const showDetails = useCallback(async (id, index) => {
-    setSelectedIndex(index)
+  const showDetails = useCallback(async (id) => {
     setSelectedId(id)
   }, [setSelectedId])
 
-  const indexer = useMemo(() => {
-    if (!provider) return
-    if (!account || account.address.trim().length == 0) return
-    const callback: Callback = {
-      onNewInteractions: (interactions) => {
-        callbackProxy?.current?.onNewInteractions(interactions)
-        interactions.forEach((interaction) => { db.add(interaction) })
-      },
-      onStatusUpdate: (update) => {
-        callbackProxy?.current?.onStatusUpdate?.(update)
-      }
-    }
-    const indexer = getIndexer(account, provider, networkConfig, callback)
-    return indexer
-  }, [callbackProxy, account, provider, db, networkConfig])
-
-  useEffect(() => {
-    indexer?.start().catch((e: any) => console.error(e))
-    return () => indexer?.stop()
-  }, [indexer])
-
   const reindex = useCallback(async () => {
-    if (!indexer) return;
-    indexer.pause();
-    await db.drop();
-    (indexer.state as IndexerState).reset();
-    db.getAll().then((loaded) => setTxs(loaded))
-    indexer.resume();
-    setStatus("Waiting for reindexing")
-  }, [indexer, db, setStatus])
+    if (await accountRepo.reindex()) {
+      accountRepo.getAllTxs().then((loaded) => setTxs(loaded))
+      setStatus("Waiting for reindexing")
+    }
+  }, [accountRepo, setStatus])
 
   useEffect(() => {
     setTxs([])
-    db.getAll().then((loaded) => setTxs(loaded))
-  }, [db, setTxs])
+    accountRepo.getAllTxs().then((loaded) => setTxs(loaded))
+  }, [accountRepo, setTxs])
 
   const details = useMemo(() => {
     return <TxDetails id={selectedId} handleClose={() => setSelectedId(undefined)} />
@@ -112,7 +76,7 @@ function Transactions() {
         {status}
         <Button onClick={() => setShowSettings(true)}>Settings</Button>
       </>
-      {txs.map((e, index) => <TxSummary interaction={e} showDetails={(id) => showDetails(id, index)} />)}
+      {txs.map((e) => <TxSummary interaction={e} showDetails={(id) => showDetails(id)} />)}
       <SettingsDialog open={showSettings} handleClose={() => setShowSettings(false)} reindex={reindex} />
       {details}
     </Root>

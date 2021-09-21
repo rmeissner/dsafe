@@ -1,9 +1,8 @@
-import { Dialog, DialogContent, DialogTitle, TextField, Typography } from '@mui/material'
+import { Dialog, DialogContent, DialogTitle } from '@mui/material'
 import { styled } from '@mui/system'
-import React, { ReactElement, useEffect, useMemo, useState } from 'react'
+import React, { ReactElement, useEffect, useState } from 'react'
 import { SafeInteraction } from 'safe-indexer-ts'
-import { InteractionsDB } from '../../../logic/db/interactions'
-import { useAccount } from '../Account'
+import { useTransactionRepo } from '../../provider/TransactionRepositoryProvider'
 import ModuleTxDetails from './details/ModuleTxDetails'
 import MultisigTxDetails from './details/MultisigTxDetails'
 import TransferTxDetails from './details/TransferTxDetails'
@@ -31,21 +30,20 @@ const renderDetails = (interaction?: SafeInteraction): ReactElement => {
 }
 
 export const TxDetails: React.FC<Props> = ({ id, handleClose }) => {
-    const account = useAccount()
+    const accountRepo = useTransactionRepo()
     const [interaction, setInteraction] = useState<SafeInteraction | undefined>(undefined)
-    const db = useMemo(() => { return new InteractionsDB(account.id) }, [account])
     useEffect(() => {
         setInteraction(undefined)
         if (!id) return
         const loadInteraction = async () => {
             try {
-                setInteraction(await db.get(id))
+                setInteraction(await accountRepo.getTx(id))
             } catch {
                 handleClose()
             }
         }
         loadInteraction()
-    }, [id, db, setInteraction, handleClose])
+    }, [id, accountRepo, setInteraction, handleClose])
     return <TxDialog open={!!id} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>Transaction Details</DialogTitle>
         <DialogContent>

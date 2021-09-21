@@ -2,8 +2,8 @@ import React, { useContext } from 'react'
 import { useParams } from 'react-router'
 import Transactions from './Transactions';
 import shortNames from '../../logic/utils/shotNameToChainId.json'
-import { networkInterfaces } from 'os';
 import { ethers } from 'ethers';
+import TransactionRepositoryProvider from '../provider/TransactionRepositoryProvider';
 
 interface Path {
     account: string
@@ -77,8 +77,13 @@ const parseAccount = (account: string): Account | undefined => {
 export const Account: React.FC = () => {
     const { account } = useParams<Path>() //0x969c350577B6CD3A8E963cBB8D9c728B840c459e
     const value = parseAccount(account)
+    if (!value) return (<>
+        "Invalid account"
+    </>)
     return <AccountContext.Provider value={value}>
-        { value ? <Transactions /> : ("Invalid account") }
+        <TransactionRepositoryProvider>
+            <Transactions />
+        </TransactionRepositoryProvider>
     </AccountContext.Provider>
 }
 

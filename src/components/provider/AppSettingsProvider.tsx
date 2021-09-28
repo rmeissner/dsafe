@@ -42,7 +42,7 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
     const updateNetworkConfig = (value: NetworkConfig) => {
         const serialized = JSON.stringify({
             maxBlocks: value.maxBlocks || 100,
-            startingBlock: value.startingBlock || 5590754
+            startingBlock: value.startingBlock || -1
         })
         localStorage.setItem("app_state_network_config", serialized)
         setNetworkConfig(value)

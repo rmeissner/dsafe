@@ -21,8 +21,8 @@ function Transactions() {
 
   useEffect(() => {
     const callback: Callback = {
-      onNewInteractions: (newTxs) => {
-        setTxs(newTxs.concat(txs))
+      onNewInteractions: () => {
+        accountRepo.getAllTxs().then((loaded) => setTxs(loaded))
       },
       onStatusUpdate: (update) => {
         switch (update.type) {

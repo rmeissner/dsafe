@@ -2,15 +2,18 @@ import { providers } from "ethers";
 import { Callback, IndexerStatus, SafeIndexer, SafeInteraction } from "safe-indexer-ts";
 import Account from "../../components/account/Account";
 import { NetworkConfig } from "../../components/provider/AppSettingsProvider";
-import { InteractionsDB } from "../db/interactions";
+import { InteractionsDB, QueuedInteractionsDB } from "../db/interactions";
 import { IndexerState } from "../state/indexer";
 import { getIndexer } from "../utils/indexer";
 
+
 export class TransactionRepository implements Callback {
     callbacks: Set<Callback> = new Set()
+    currentStatus: IndexerStatus | undefined
     indexer: SafeIndexer | undefined
     state: IndexerState
     db: InteractionsDB
+    queueDb: QueuedInteractionsDB
     account: Account
     networkConfig: NetworkConfig
 
@@ -18,6 +21,7 @@ export class TransactionRepository implements Callback {
         this.account = account
         this.networkConfig = networkConfig
         this.db = new InteractionsDB(account.id)
+        this.queueDb = new QueuedInteractionsDB(account.id)
         this.state = new IndexerState(account.id, networkConfig.startingBlock)
     }
 
@@ -28,12 +32,13 @@ export class TransactionRepository implements Callback {
         indexer.start().catch((e) => console.error(e))
         indexer.start(true).catch((e) => console.error(e))
         return () => {
-            indexer.stop()
+            this.disconnect()
         }
     }
 
     disconnect() {
         this.indexer?.stop()
+        this.currentStatus = undefined
     }
 
     registerCallback(callback: Callback) {
@@ -42,6 +47,7 @@ export class TransactionRepository implements Callback {
 
     unregisterCallback(callback: Callback) {
         this.callbacks.delete(callback)
+        this.postCurrentStatusUpdateToCallback(callback)
     }
 
     private checkForCreation(interactions: SafeInteraction[]) {
@@ -60,9 +66,21 @@ export class TransactionRepository implements Callback {
         }
     }
 
+    private async handleNewInteraction(interaction: SafeInteraction) {
+        try {
+            await this.db.add(interaction)
+            if (interaction.type === "multisig_transaction") {
+                // TODO: check if we can inject details
+                await this.queueDb.remove(interaction.safeTxHash)
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
     onNewInteractions(interactions: SafeInteraction[]) {
         this.checkForCreation(interactions)
-        interactions.forEach((interaction) => { this.db.add(interaction) })
+        interactions.forEach((i) => { this.handleNewInteraction(i) })
         this.callbacks.forEach((callback) => {
             try {
                 callback.onNewInteractions(interactions)
@@ -73,13 +91,23 @@ export class TransactionRepository implements Callback {
     }
 
     onStatusUpdate(update: IndexerStatus) {
-        this.callbacks.forEach((callback) => {
-            try {
-                callback.onStatusUpdate?.(update)
-            } catch (e) {
-                console.log(e)
-            }
-        })
+        this.currentStatus = update
+        this.postCurrentStatusUpdate()
+    }
+
+    private postCurrentStatusUpdate() {
+        if (!this.currentStatus) return
+        this.callbacks.forEach((cb) => { this.postCurrentStatusUpdateToCallback(cb) })
+    }
+
+    private postCurrentStatusUpdateToCallback(callback: Callback) {
+        const currentStatus = this.currentStatus
+        if (!currentStatus) return
+        try {
+            callback.onStatusUpdate?.(currentStatus)
+        } catch (e) {
+            console.log(e)
+        }
     }
 
     async getTx(id: string): Promise<SafeInteraction> {
@@ -91,6 +119,7 @@ export class TransactionRepository implements Callback {
     }
 
     async reindex(): Promise<boolean> {
+        this.currentStatus = undefined
         const indexer = this.indexer
         if (!indexer) return false;
         indexer.pause();

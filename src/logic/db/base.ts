@@ -45,6 +45,20 @@ export abstract class AbstractDB<T> {
         })
     }
 
+    async remove(id: string): Promise<void> {
+        const db = await this.open();
+        return new Promise((callback, reject) => {
+            const transaction = db.transaction([this.storeName], "readwrite");
+            transaction.onerror = function (e) {
+                reject(e)
+            }
+            const store = transaction.objectStore(this.storeName)
+            store.delete(id).onsuccess = function () {
+                callback()
+            }
+        })
+    }
+
     async get(id: string): Promise<T> {
         const db = await this.open();
         return new Promise((callback, reject) => {

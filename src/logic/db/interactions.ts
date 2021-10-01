@@ -1,46 +1,32 @@
 import { SafeInteraction } from "safe-indexer-ts";
 import { SafeTransaction } from "../models/transactions";
-import { AbstractDB } from "./base";
+import { AbstractDAO } from "./base";
+import { INTERACTIONS_INDEX, INTERACTIONS_STORE, QUEUED_TX_INDEX, QUEUED_TX_STORE, SafeDB } from "./safe";
 
 
-export class InteractionsDB extends AbstractDB<SafeInteraction> {
-
-    readonly indexKey = "timestamp"
-
+export class InteractionsDAO extends AbstractDAO<SafeInteraction> {
     constructor(safe: string) {
-        super(safe, 1, "interactions", (db, oldVersion) => {
-            if (oldVersion < 1) {
-                const store = db.createObjectStore(this.storeName, { keyPath: "id" })
-                store.createIndex(this.indexKey, this.indexKey, { unique: false })
-            }
-        });
+        super(new SafeDB(safe), INTERACTIONS_STORE)
     }
 
     getAll(): Promise<SafeInteraction[]> {
-        return this.getAllByIndex(this.indexKey)
+        return this.getAllByIndex(INTERACTIONS_INDEX)
     }
 
 }
 
 export interface QueuedSafeTransaction extends SafeTransaction {
     id: string
+    version: string
 }
 
-export class QueuedInteractionsDB extends AbstractDB<QueuedSafeTransaction> {
-
-    readonly indexKey = "nonce"
-
+export class QueuedInteractionsDAO extends AbstractDAO<QueuedSafeTransaction> {
     constructor(safe: string) {
-        super(safe, 1, "queued_interactions", (db, oldVersion) => {
-            if (oldVersion < 1) {
-                const store = db.createObjectStore(this.storeName, { keyPath: "id" })
-                store.createIndex(this.indexKey, this.indexKey, { unique: false })
-            }
-        });
+        super(new SafeDB(safe), QUEUED_TX_STORE)
     }
 
-    getAll(): Promise<QueuedSafeTransaction[]> {
-        return this.getAllByIndex(this.indexKey)
+    getAll(nonce: string): Promise<QueuedSafeTransaction[]> {
+        return this.getAllByIndex(QUEUED_TX_INDEX, IDBKeyRange.lowerBound(nonce))
     }
 
 }

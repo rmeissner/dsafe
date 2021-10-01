@@ -16,20 +16,20 @@ export const TransactionRepositoryProvider: React.FC = ({ children }) => {
     const account = useAccount()
     const { provider, networkConfig } = useAppSettings()
 
-    const accountRepo = useMemo(() => {
+    const repo = useMemo(() => {
         return new TransactionRepository(account, networkConfig)
     }, [ account, networkConfig ])
 
     useEffect(() => {
         if (!provider) return
-        return accountRepo.connect(provider)
+        return repo.connect(provider)
     }, [provider])
 
     useEffect(() => {
-        return () => accountRepo.disconnect()
-    }, [accountRepo])
+        return () => repo.disconnect()
+    }, [repo])
 
-    return <TransactionRepoContext.Provider value={accountRepo}>
+    return <TransactionRepoContext.Provider value={repo}>
         { children }
     </TransactionRepoContext.Provider>
 }

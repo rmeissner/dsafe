@@ -2,7 +2,7 @@ import { providers } from "ethers";
 import { Callback, IndexerStatus, SafeIndexer, SafeInteraction } from "safe-indexer-ts";
 import Account from "../../components/account/Account";
 import { NetworkConfig } from "../../components/provider/AppSettingsProvider";
-import { InteractionsDB, QueuedInteractionsDB } from "../db/interactions";
+import { InteractionsDAO } from "../db/interactions";
 import { IndexerState } from "../state/indexer";
 import { getIndexer } from "../utils/indexer";
 
@@ -12,16 +12,14 @@ export class TransactionRepository implements Callback {
     currentStatus: IndexerStatus | undefined
     indexer: SafeIndexer | undefined
     state: IndexerState
-    db: InteractionsDB
-    queueDb: QueuedInteractionsDB
+    db: InteractionsDAO
     account: Account
     networkConfig: NetworkConfig
 
     constructor(account: Account, networkConfig: NetworkConfig) {
         this.account = account
         this.networkConfig = networkConfig
-        this.db = new InteractionsDB(account.id)
-        this.queueDb = new QueuedInteractionsDB(account.id)
+        this.db = new InteractionsDAO(account.id)
         this.state = new IndexerState(account.id, networkConfig.startingBlock)
     }
 
@@ -69,10 +67,6 @@ export class TransactionRepository implements Callback {
     private async handleNewInteraction(interaction: SafeInteraction) {
         try {
             await this.db.add(interaction)
-            if (interaction.type === "multisig_transaction") {
-                // TODO: check if we can inject details
-                await this.queueDb.remove(interaction.safeTxHash)
-            }
         } catch (e) {
             console.error(e)
         }

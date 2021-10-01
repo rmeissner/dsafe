@@ -46,6 +46,10 @@ export const MultisigTxDetails: React.FC<Props> = ({ transaction }) => {
                 <Entry>
                     <LongText>{transaction.details.data}</LongText>
                 </Entry>
+                <Header>Nonce:</Header>
+                <Entry>
+                    <LongText>{transaction.details.nonce}</LongText>
+                </Entry>
                 <Header>Signatures:</Header>
                 <Entry>
                     <LongText>{transaction.details.signatures}</LongText>

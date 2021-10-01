@@ -4,6 +4,8 @@ import Transactions from './Transactions';
 import shortNames from '../../logic/utils/shotNameToChainId.json'
 import { ethers } from 'ethers';
 import TransactionRepositoryProvider from '../provider/TransactionRepositoryProvider';
+import QueueRepositoryProvider from '../provider/QueueRepositoryProvider';
+import Queue from './Queue';
 
 interface Path {
     account: string
@@ -82,7 +84,10 @@ export const Account: React.FC = () => {
     </>)
     return <AccountContext.Provider value={value}>
         <TransactionRepositoryProvider>
-            <Transactions />
+            <QueueRepositoryProvider>
+                <Queue />
+                <Transactions />
+            </QueueRepositoryProvider>
         </TransactionRepositoryProvider>
     </AccountContext.Provider>
 }

@@ -1,32 +1,39 @@
+import { providers } from "ethers";
 import Account from "../../components/account/Account";
-import { NetworkConfig } from "../../components/provider/AppSettingsProvider";
-import { QueuedInteractionsDB, QueuedSafeTransaction } from "../db/interactions";
+import { QueuedInteractionsDAO, QueuedSafeTransaction } from "../db/interactions";
 import { SafeTransaction } from "../models/transactions";
+import { Safe } from "../utils/safe";
 
 export class QueueRepository {
-    db: QueuedInteractionsDB
+    db: QueuedInteractionsDAO
     account: Account
-    networkConfig: NetworkConfig
+    safe: Safe
 
-    constructor(account: Account, networkConfig: NetworkConfig) {
+    constructor(account: Account, provider?: providers.Provider) {
         this.account = account
-        this.networkConfig = networkConfig
-        this.db = new QueuedInteractionsDB(account.id)
+        this.db = new QueuedInteractionsDAO(account.id)
+        this.safe = new Safe(account.address, provider)
     }
 
-    async addTx(tx: SafeTransaction) {
-        await this.db.add({
-            id: "",
+    async addTx(tx: SafeTransaction): Promise<QueuedSafeTransaction> {
+        const hashInfo = await this.safe.getTransactionHash(tx)
+        const queuedTx = {
+            id: hashInfo.hash,
+            version: hashInfo.version,
             ...tx
-        })
+        }
+        await this.db.add(queuedTx)
+        return queuedTx
     }
 
     async getTx(hash: string): Promise<QueuedSafeTransaction> {
         return this.db.get(hash)
     }
 
-    async getAllTxs(): Promise<QueuedSafeTransaction[]> {
-        return this.db.getAll()
+    async getQueuedTxs(): Promise<QueuedSafeTransaction[]> {
+        const nonce = await this.safe.nonce()
+        console.log(nonce.toString())
+        return this.db.getAll(nonce.toString())
     }
 
 }

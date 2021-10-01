@@ -1,19 +1,18 @@
-export abstract class AbstractDB<T> {
+export abstract class AbstractDB {
     private internalDb: IDBDatabase | undefined;
     private indexedDB = window.indexedDB;
     readonly dbKey: string;
     readonly dbVersion: number;
-    readonly storeName: string;
     readonly migration: (db: IDBDatabase, oldVersion: number, newVersion: number) => void;
 
-    constructor(dbKey: string, dbVersion: number, storeName: string, migration: (db: IDBDatabase, oldVersion: number, newVersion: number) => void) {
+    constructor(dbKey: string, dbVersion: number, migration: (db: IDBDatabase, oldVersion: number, newVersion: number) => void) {
         this.dbKey = dbKey;
         this.dbVersion = dbVersion;
-        this.storeName = storeName;
         this.migration = migration;
     }
 
     async open(): Promise<IDBDatabase> {
+        console.log("open")
         if (this.internalDb) return this.internalDb
         const dbStore = this;
         return new Promise((callback, reject) => {
@@ -26,13 +25,25 @@ export abstract class AbstractDB<T> {
                 callback(this.result);
             }
             request.onupgradeneeded = function (event) {
+                console.log("onupgradeneeded")
                 dbStore.migration(this.result, event.oldVersion, this.result.version)
             }
         })
     }
+}
+
+export abstract class AbstractDAO<T> {
+    readonly db: AbstractDB;
+    readonly storeName: string;
+
+    constructor(db: AbstractDB, storeName: string) {
+        this.db = db;
+        this.storeName = storeName;
+    }
+
 
     async add(entry: T): Promise<void> {
-        const db = await this.open();
+        const db = await this.db.open();
         return new Promise((callback, reject) => {
             const transaction = db.transaction([this.storeName], "readwrite");
             transaction.onerror = function (e) {
@@ -46,7 +57,7 @@ export abstract class AbstractDB<T> {
     }
 
     async remove(id: string): Promise<void> {
-        const db = await this.open();
+        const db = await this.db.open();
         return new Promise((callback, reject) => {
             const transaction = db.transaction([this.storeName], "readwrite");
             transaction.onerror = function (e) {
@@ -60,7 +71,7 @@ export abstract class AbstractDB<T> {
     }
 
     async get(id: string): Promise<T> {
-        const db = await this.open();
+        const db = await this.db.open();
         return new Promise((callback, reject) => {
             const transaction = db.transaction([this.storeName], "readwrite");
             transaction.onerror = function (e) {
@@ -73,22 +84,22 @@ export abstract class AbstractDB<T> {
         })
     }
 
-    async getAllByIndex(index: string): Promise<T[]> {
-        const db = await this.open();
+    async getAllByIndex(index: string, keyRange?: IDBKeyRange): Promise<T[]> {
+        const db = await this.db.open();
         return new Promise((callback, reject) => {
             const transaction = db.transaction([this.storeName], "readwrite");
             transaction.onerror = function (e) {
                 reject(e)
             }
             const store = transaction.objectStore(this.storeName)
-            store.index(index).getAll().onsuccess = function () {
+            store.index(index).getAll(keyRange).onsuccess = function () {
                 callback(this.result.reverse() as T[])
             }
         })
     }
 
     async drop(): Promise<void> {
-        const db = await this.open();
+        const db = await this.db.open();
         return new Promise((callback, reject) => {
             const transaction = db.transaction([this.storeName], "readwrite");
             transaction.onerror = function (e) {

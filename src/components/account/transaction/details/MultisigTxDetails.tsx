@@ -28,6 +28,10 @@ export const MultisigTxDetails: React.FC<Props> = ({ transaction }) => {
         <Entry>
             <Typography>{transaction.txHash}</Typography>
         </Entry>
+        <Header>Id:</Header>
+        <Entry>
+            <Typography>{transaction.safeTxHash}</Typography>
+        </Entry>
         {transaction.details ? (
             <Group>
                 <Header>Operation:</Header>

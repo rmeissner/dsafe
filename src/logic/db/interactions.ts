@@ -1,7 +1,7 @@
 import { SafeInteraction } from "safe-indexer-ts";
-import { SafeTransaction } from "../models/transactions";
+import { SafeTransaction, SafeTransactionSignature } from "../models/transactions";
 import { AbstractDAO } from "./base";
-import { INTERACTIONS_INDEX, INTERACTIONS_STORE, QUEUED_TX_INDEX, QUEUED_TX_STORE, SafeDB } from "./safe";
+import { INTERACTIONS_INDEX, INTERACTIONS_STORE, QUEUED_TX_INDEX, QUEUED_TX_STORE, SafeDB, TX_SIGNATURES_INDEX, TX_SIGNATURES_STORE } from "./safe";
 
 
 export class InteractionsDAO extends AbstractDAO<SafeInteraction> {
@@ -28,5 +28,14 @@ export class QueuedInteractionsDAO extends AbstractDAO<QueuedSafeTransaction> {
     getAll(nonce: string): Promise<QueuedSafeTransaction[]> {
         return this.getAllByIndex(QUEUED_TX_INDEX, IDBKeyRange.lowerBound(nonce))
     }
+}
 
+export class TxSignaturesDAO extends AbstractDAO<SafeTransactionSignature> {
+    constructor(safe: string) {
+        super(new SafeDB(safe), TX_SIGNATURES_STORE)
+    }
+
+    getAll(safeTxHash: string): Promise<SafeTransactionSignature[]> {
+        return this.getAllByIndex(TX_SIGNATURES_INDEX, safeTxHash)
+    }
 }

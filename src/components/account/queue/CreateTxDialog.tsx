@@ -1,10 +1,10 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
 import { styled } from '@mui/system'
 import { ethers, BigNumber } from 'ethers'
-import React, { ReactElement, useCallback, useEffect, useState } from 'react'
-import { QueuedSafeTransaction } from '../../../../logic/db/interactions'
-import { SafeTransaction } from '../../../../logic/models/transactions'
-import { useQueueRepo } from '../../../provider/QueueRepositoryProvider'
+import React, { useState } from 'react'
+import { QueuedSafeTransaction } from '../../../logic/db/interactions'
+import { SafeTransaction } from '../../../logic/models/transactions'
+import { useQueueRepo } from '../../provider/QueueRepositoryProvider'
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -59,7 +59,7 @@ export const CreateTx: React.FC<Props> = ({ open, handleClose, handleTx }) => {
             <TextField label="Nonce" onChange={(e) => setNonceString(e.target.value)} value={nonceString} fullWidth /><br />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCreate}>Subscribe</Button>
+          <Button onClick={handleCreate}>Create</Button>
         </DialogActions>
     </TxDialog>
 }

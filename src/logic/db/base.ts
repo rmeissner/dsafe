@@ -84,7 +84,7 @@ export abstract class AbstractDAO<T> {
         })
     }
 
-    async getAllByIndex(index: string, keyRange?: IDBKeyRange): Promise<T[]> {
+    async getAllByIndex(index: string, key?: IDBKeyRange | IDBValidKey): Promise<T[]> {
         const db = await this.db.open();
         return new Promise((callback, reject) => {
             const transaction = db.transaction([this.storeName], "readwrite");
@@ -92,7 +92,7 @@ export abstract class AbstractDAO<T> {
                 reject(e)
             }
             const store = transaction.objectStore(this.storeName)
-            store.index(index).getAll(keyRange).onsuccess = function () {
+            store.index(index).getAll(key).onsuccess = function () {
                 callback(this.result.reverse() as T[])
             }
         })

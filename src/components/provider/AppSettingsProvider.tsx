@@ -1,4 +1,5 @@
-import { ethers, providers } from "ethers";
+import { ethers, providers, Signer } from "ethers";
+import { TypedDataSigner } from "@ethersproject/abstract-signer"
 import React, { useContext, useMemo, useState } from "react";
 
 declare let window: any;
@@ -12,10 +13,12 @@ export interface AppSettings {
     readonly customRpc: string,
     readonly useCustomRpc: boolean,
     readonly provider: providers.Provider | undefined,
+    readonly signer: Signer & TypedDataSigner | undefined,
     readonly networkConfig: NetworkConfig,
     toggleCustomRpc: (value: boolean) => void
     updateCustomRpc: (value: string) => void
     updateNetworkConfig: (value: NetworkConfig) => void
+    enable: () => Promise<string[]>
 }
 
 const AppSettingsContext = React.createContext<AppSettings | undefined>(undefined);
@@ -57,7 +60,13 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
         }
         return undefined
     }, [useCustomRpc, customRpc])
-    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig }}>
+    const enable = async (): Promise<string[]> => {
+        if (window.ethereum) {
+            return window.ethereum.enable()
+        }
+        return []
+    }
+    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer: provider?.getSigner(), networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, enable }}>
         {children}
     </AppSettingsContext.Provider>
 }

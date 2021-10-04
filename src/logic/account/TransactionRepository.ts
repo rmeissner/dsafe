@@ -55,9 +55,8 @@ export class TransactionRepository implements Callback {
                 interaction.type === "multisig_transaction" && interaction.details?.nonce === 0
             )) {
                 console.log("Found creation, stop reverse indexing")
-                this.state.earliestBlock = interaction.block
                 this.indexer?.updateConfig({
-                    earliestBlock: interaction.block
+                    earliestBlock: Math.max(0, interaction.block - this.networkConfig.maxBlocks)
                 })
                 return
             }

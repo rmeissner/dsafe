@@ -1,3 +1,5 @@
+import { SafeSignatureType } from "../utils/signatures";
+
 export interface MetaTransaction {
     to: string,
     value: string,
@@ -12,4 +14,16 @@ export interface SafeTransaction extends MetaTransaction {
     gasToken: string,
     refundReceiver: string,
     nonce: string
+}
+
+export interface SignedSafeTransaction extends SafeTransaction {
+    signatures: string
+}
+
+export interface SafeTransactionSignature {
+    id: string,
+    type: SafeSignatureType,
+    signer: string,
+    data: string,
+    safeTxHash: string,
 }

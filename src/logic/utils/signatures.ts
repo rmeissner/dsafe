@@ -53,7 +53,6 @@ export const shareableSignatureString = (signature: SafeTransactionSignature): s
 
 export const parseSafeSignature = async (signatureString: string, safeTxHash?: string, sigType?: SafeSignatureType): Promise<SafeTransactionSignature> => {
     const signatureParts = signatureString.split(":")
-    console.log(signatureParts)
     if (
         (signatureParts.length == 2 && !safeTxHash && !sigType) ||
         (signatureParts.length == 3 && !sigType) ||

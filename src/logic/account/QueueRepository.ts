@@ -35,7 +35,6 @@ export class QueueRepository {
 
     async getQueuedTxs(): Promise<QueuedSafeTransaction[]> {
         const nonce = await this.safe.nonce()
-        console.log(nonce.toString())
         return this.queueDao.getAll(nonce.toString())
     }
 

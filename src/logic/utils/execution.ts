@@ -13,14 +13,13 @@ export const prepareSignatures = async (status: SafeStatus, tx: QueuedSafeTransa
         signatureMap.set(signature.signer, signature)
     }
     const submitterIsOwner = submitterAddress && status.owners.indexOf(submitterAddress) >= 0
-    console.log(submitterIsOwner, status.owners, submitterAddress, signatures, signatureMap)
     const requiredSigntures = submitterIsOwner ? status.threshold.sub(1) : status.threshold
     if (requiredSigntures.toNumber() > signatureMap.size) throw Error(`Not enough signatures (${signatureMap.size} of ${requiredSigntures})`)
     const signatureArray = []
     if (submitterIsOwner) {
         signatureArray.push(await buildPreValidatedSignature(submitterAddress, tx))
     }
-    return signatureArray.concat(Array.from(signatures.values()).slice(0, requiredSigntures.toNumber()))
+    return signatureArray.concat(Array.from(signatureMap.values()).slice(0, requiredSigntures.toNumber()))
 }
 
 const buildStaticPart = (signature: SafeTransactionSignature, offset: number): string => {

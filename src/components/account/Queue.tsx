@@ -5,6 +5,8 @@ import CreateTx from './queue/CreateTxDialog';
 import { useQueueRepo } from '../provider/QueueRepositoryProvider';
 import QueuedTxSummary from './queue/QueuedTxSummary';
 import QueuedTxDetails from './queue/QueuedTxDetails';
+import { useTransactionRepo } from '../provider/TransactionRepositoryProvider';
+import { Callback } from 'safe-indexer-ts';
 
 const Root = styled('div')(({ theme }) => ({
   textAlign: "center"
@@ -15,6 +17,7 @@ function Queue() {
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
   const [ququedTxs, setQueuedTxs] = useState<QueuedSafeTransaction[]>([])
   const queueRepo = useQueueRepo()
+  const txRepo = useTransactionRepo()
 
   const loadQueuedTxs = useCallback(async () => {
     try {
@@ -23,6 +26,14 @@ function Queue() {
       console.error(e)
     }
   }, [queueRepo, setQueuedTxs])
+
+  useEffect(() => {
+    const callback: Callback = {
+      onNewInteractions: loadQueuedTxs
+    }
+    txRepo.registerCallback(callback)
+    return () => txRepo.unregisterCallback(callback)
+  }, [txRepo, loadQueuedTxs])
 
   useEffect(() => {
     loadQueuedTxs()

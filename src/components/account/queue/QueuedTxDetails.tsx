@@ -8,6 +8,7 @@ import { SafeTransactionSignature } from '../../../logic/models/transactions';
 import AddSignatureDialog from './AddSignatureDialog';
 import SignTransactionDialog from './SignTransactionDialog';
 import ExecuteTxDialog from './ExecuteTxDialog';
+import { shareableSignatureString } from '../../../logic/utils/signatures';
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -16,6 +17,12 @@ const TxDialog = styled(Dialog)(({ theme }) => ({
 export interface Props {
     id?: string,
     handleClose: () => void
+}
+
+const shareSignature = (sig: SafeTransactionSignature) => {
+    const shareText = shareableSignatureString(sig)
+    console.log({shareText})
+    navigator.clipboard.writeText(shareText)
 }
 
 export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
@@ -84,7 +91,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
                         </Entry>
                         <Header>Signatures:</Header>
                         {signatures?.map((sig) => (<Entry>
-                            <LongText>{sig.signer}</LongText>
+                            <LongText onClick={() => { shareSignature(sig) }}>{sig.signer}</LongText>
                         </Entry>))}
                         <Button onClick={() => setShowSignTransaction(true)}>Sign</Button>
                         <Button onClick={() => setShowAddSignature(true)}>Add</Button>

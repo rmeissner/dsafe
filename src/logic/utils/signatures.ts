@@ -53,6 +53,7 @@ export const shareableSignatureString = (signature: SafeTransactionSignature): s
 
 export const parseSafeSignature = async (signatureString: string, safeTxHash?: string, sigType?: SafeSignatureType): Promise<SafeTransactionSignature> => {
     const signatureParts = signatureString.split(":")
+    console.log(signatureParts)
     if (
         (signatureParts.length == 2 && !safeTxHash && !sigType) ||
         (signatureParts.length == 3 && !sigType) ||
@@ -65,7 +66,7 @@ export const parseSafeSignature = async (signatureString: string, safeTxHash?: s
     const hash = safeTxHash || signatureParts[2]
     // TODO: verify signature type
     const type = sigType || signatureParts[3] as SafeSignatureType
-    const id = ethers.utils.keccak256(data + hash)
+    const id = ethers.utils.keccak256(data + hash.slice(2))
     return {
         id,
         type,

@@ -25,7 +25,7 @@ export class QueuedInteractionsDAO extends AbstractDAO<QueuedSafeTransaction> {
         super(new SafeDB(safe), QUEUED_TX_STORE)
     }
 
-    getAll(nonce: string): Promise<QueuedSafeTransaction[]> {
+    getAll(nonce: number): Promise<QueuedSafeTransaction[]> {
         return this.getAllByIndex(QUEUED_TX_INDEX, IDBKeyRange.lowerBound(nonce))
     }
 }

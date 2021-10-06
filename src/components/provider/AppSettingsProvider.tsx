@@ -12,7 +12,7 @@ export interface NetworkConfig {
 export interface AppSettings {
     readonly customRpc: string,
     readonly useCustomRpc: boolean,
-    readonly provider: providers.Provider | undefined,
+    readonly provider: providers.JsonRpcProvider | undefined,
     readonly signer: Signer & TypedDataSigner | undefined,
     readonly networkConfig: NetworkConfig,
     toggleCustomRpc: (value: boolean) => void

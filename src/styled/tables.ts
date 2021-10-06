@@ -6,6 +6,11 @@ export const Group = styled('div')(({ theme }) => ({
     flexDirection: 'column'
 }))
 
+export const Row = styled('div')(({ theme }) => ({
+    display: 'flex',
+    flexDirection: 'row'
+}))
+
 export const Header = styled('div')(({ theme }) => ({
     textAlign: 'start'
 }))

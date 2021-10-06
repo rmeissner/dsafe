@@ -6,6 +6,8 @@ import { ethers } from 'ethers';
 import TransactionRepositoryProvider from '../provider/TransactionRepositoryProvider';
 import QueueRepositoryProvider from '../provider/QueueRepositoryProvider';
 import Queue from './Queue';
+import { Group, Row } from '../../styled/tables';
+import Apps from './Apps';
 
 interface Path {
     account: string
@@ -85,8 +87,13 @@ export const Account: React.FC = () => {
     return <AccountContext.Provider value={value}>
         <TransactionRepositoryProvider>
             <QueueRepositoryProvider>
-                <Queue />
-                <Transactions />
+                <Row>
+                    <Group>
+                        <Queue />
+                        <Transactions />
+                    </Group>
+                    <Apps />
+                </Row>
             </QueueRepositoryProvider>
         </TransactionRepositoryProvider>
     </AccountContext.Provider>

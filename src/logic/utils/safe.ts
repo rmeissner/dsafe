@@ -21,7 +21,7 @@ export class Safe {
         return new WritableSafe(this.safeContract.address, signer)
     }
 
-    nonce(): Promise<string> {
+    nonce(): Promise<BigNumber> {
         return this.safeContract.nonce()
     }
 

@@ -7,6 +7,7 @@ import QueuedTxSummary from './queue/QueuedTxSummary';
 import QueuedTxDetails from './queue/QueuedTxDetails';
 import { useTransactionRepo } from '../provider/TransactionRepositoryProvider';
 import { Callback } from 'safe-indexer-ts';
+import { QueueRepositoryUpdates } from '../../logic/account/QueueRepository';
 
 const Root = styled('div')(({ theme }) => ({
   textAlign: "center"
@@ -34,6 +35,14 @@ function Queue() {
     txRepo.registerCallback(callback)
     return () => txRepo.unregisterCallback(callback)
   }, [txRepo, loadQueuedTxs])
+
+  useEffect(() => {
+    const callback: QueueRepositoryUpdates = {
+      onNewTx: loadQueuedTxs
+    }
+    queueRepo.registerCallback(callback)
+    return () => queueRepo.unregisterCallback(callback)
+  }, [queueRepo, loadQueuedTxs])
 
   useEffect(() => {
     loadQueuedTxs()

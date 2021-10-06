@@ -13,7 +13,7 @@ export interface SafeTransaction extends MetaTransaction {
     gasPrice: string,
     gasToken: string,
     refundReceiver: string,
-    nonce: string
+    nonce: number
 }
 
 export interface SignedSafeTransaction extends SafeTransaction {

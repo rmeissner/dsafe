@@ -9,6 +9,11 @@ export interface NetworkConfig {
     startingBlock: number
 }
 
+const defaultConfig: NetworkConfig = {
+    startingBlock: -1,
+    maxBlocks: 1000
+}
+
 export interface AppSettings {
     readonly customRpc: string,
     readonly useCustomRpc: boolean,
@@ -33,7 +38,7 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
     const [useCustomRpc, setUseCustomRpc] = useState(localStorage.getItem("app_state_use_rpc") === "true")
     const [customRpc, setCustomRpc] = useState(localStorage.getItem("app_state_rpc") || "")
     const storedConfig = localStorage.getItem("app_state_network_config")
-    const [networkConfig, setNetworkConfig] = useState<NetworkConfig>(storedConfig ? JSON.parse(storedConfig) : {})
+    const [networkConfig, setNetworkConfig] = useState<NetworkConfig>(storedConfig ? JSON.parse(storedConfig) : defaultConfig)
     const toggleCustomRpc = (value: boolean) => {
         localStorage.setItem("app_state_use_rpc", value ? "true" : "false")
         setUseCustomRpc(value)

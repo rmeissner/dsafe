@@ -1,5 +1,12 @@
 import { State } from "safe-indexer-ts";
 
+const parseIntWithFallback = (input: string | undefined | null, fallback: number): number => {
+    if (!input) return fallback
+    const value = parseInt(input)
+    if (Number.isNaN(value)) return fallback
+    return value
+}
+
 export class IndexerState implements State {
     safe: string;
     defaultBlock: number;
@@ -11,11 +18,11 @@ export class IndexerState implements State {
         this.safe = safe;
         this.defaultBlock = defaultBlock || -1;
         const storedEarliestIndexedBlock = localStorage.getItem("indexer_state_safe_earliest_indexed_block" + this.safe);
-        this._earliestIndexedBlock = storedEarliestIndexedBlock ? parseInt(storedEarliestIndexedBlock) : this.defaultBlock;
+        this._earliestIndexedBlock = parseIntWithFallback(storedEarliestIndexedBlock, this.defaultBlock);
         const storedLastIndexedBlock = localStorage.getItem("indexer_state_safe_last_indexed_block" + this.safe);
-        this._lastIndexedBlock = storedLastIndexedBlock ? parseInt(storedLastIndexedBlock) : this.defaultBlock;
+        this._lastIndexedBlock = parseIntWithFallback(storedLastIndexedBlock, this.defaultBlock);
         const storedEarliestBlock = localStorage.getItem("indexer_state_safe_earliest_block" + this.safe);
-        this._earliestBlock = storedEarliestBlock ? parseInt(storedEarliestBlock) : 0;
+        this._earliestBlock = parseIntWithFallback(storedEarliestBlock, 0);
     }
 
     set lastIndexedBlock(value: number) {

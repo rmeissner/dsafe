@@ -23,7 +23,7 @@ export const TransactionRepositoryProvider: React.FC = ({ children }) => {
     useEffect(() => {
         if (!provider) return
         return repo.connect(provider)
-    }, [provider])
+    }, [repo, provider])
 
     useEffect(() => {
         return () => repo.disconnect()

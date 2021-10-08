@@ -25,6 +25,7 @@ export class TransactionRepository implements Callback {
 
     connect(provider: providers.Provider): () => void {
         this.disconnect()
+        console.log("connect")
         const indexer = getIndexer(this.account, provider, this.state, this.networkConfig, this)
         this.indexer = indexer
         indexer.start().catch((e) => console.error(e))
@@ -35,6 +36,7 @@ export class TransactionRepository implements Callback {
     }
 
     disconnect() {
+        console.log("disconnect")
         this.indexer?.stop()
         this.currentStatus = undefined
     }

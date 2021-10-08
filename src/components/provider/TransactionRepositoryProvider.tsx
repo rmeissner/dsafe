@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import { TransactionRepository as TransactionRepository } from "../../logic/account/TransactionRepository";
-import { useAccount } from "../account/Account";
+import { useAccount } from "../account/Dashboard";
 import { useAppSettings } from "./AppSettingsProvider";
 
 

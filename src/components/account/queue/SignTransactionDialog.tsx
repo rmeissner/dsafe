@@ -5,7 +5,7 @@ import { QueuedSafeTransaction } from '../../../logic/db/interactions'
 import { parseSafeSignature, signQueuedTx } from '../../../logic/utils/signatures'
 import { useAppSettings } from '../../provider/AppSettingsProvider'
 import { useQueueRepo } from '../../provider/QueueRepositoryProvider'
-import { useAccount } from '../Account'
+import { useAccount } from '../Dashboard'
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"

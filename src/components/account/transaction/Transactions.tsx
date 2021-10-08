@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Callback, SafeInteraction } from 'safe-indexer-ts';
 import { Button, styled } from '@mui/material';
-import { useAccount } from './Account';
-import SettingsDialog from '../settings/SettingsDialog';
-import TxDetails from './transaction/TxDetails';
-import TxSummary from './transaction/TxSummary';
-import { useTransactionRepo } from '../provider/TransactionRepositoryProvider';
+import { useAccount } from '../Dashboard';
+import SettingsDialog from '../../settings/SettingsDialog';
+import TxDetails from './TxDetails';
+import TxSummary from './TxSummary';
+import { useTransactionRepo } from '../../provider/TransactionRepositoryProvider';
 
 const Root = styled('div')(({ theme }) => ({
-  textAlign: "center"
+  textAlign: "center",
 }))
 
 function Transactions() {
@@ -73,7 +73,7 @@ function Transactions() {
   return (
     <Root>
       <>
-        {status}
+        {status}<br />
         <Button onClick={() => setShowSettings(true)}>Settings</Button>
       </>
       {txs.map((e) => <TxSummary interaction={e} showDetails={(id) => showDetails(id)} />)}

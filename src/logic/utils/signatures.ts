@@ -1,9 +1,9 @@
 import { Signer, TypedDataSigner, TypedDataDomain, TypedDataField } from "@ethersproject/abstract-signer";
 import { arrayify } from "@ethersproject/bytes";
 import { ethers } from "ethers";
-import Account from "../../components/account/Account";
 import { QueuedSafeTransaction } from "../db/interactions";
 import { SafeTransactionSignature } from "../models/transactions";
+import { Account } from "./account";
 
 export type SafeSignatureType = "eip712" | "eth_sign" | "pre_validated" | "contract"
 

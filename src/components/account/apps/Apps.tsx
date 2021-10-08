@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { CircularProgress, styled } from '@mui/material';
-import { FrameCommunicator } from '../../logic/apps/connector';
+import { FrameCommunicator } from '../../../logic/apps/connector';
 import {
   RequestId,
   BaseTransaction
 } from '@gnosis.pm/safe-apps-sdk'
-import { useAccount } from './Account';
-import { useAppSettings } from '../provider/AppSettingsProvider';
-import ProposeTxs from './apps/ProposeTxsDialog';
-import { QueuedSafeTransaction } from '../../logic/db/interactions';
+import { useAccount } from '../Dashboard';
+import { useAppSettings } from '../../provider/AppSettingsProvider';
+import ProposeTxs from './ProposeTxsDialog';
+import { QueuedSafeTransaction } from '../../../logic/db/interactions';
 
 const Root = styled('div')(({ theme }) => ({
   textAlign: "center",

@@ -1,7 +1,7 @@
 import { providers, Signer, BigNumber } from "ethers";
-import Account from "../../components/account/Account";
 import { QueuedInteractionsDAO, QueuedSafeTransaction, TxSignaturesDAO } from "../db/interactions";
 import { SafeTransaction, SafeTransactionSignature } from "../models/transactions";
+import { Account } from "../utils/account";
 import { buildSignatureBytes, prepareSignatures } from "../utils/execution";
 import { Safe } from "../utils/safe";
 

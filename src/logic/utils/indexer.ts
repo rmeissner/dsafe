@@ -1,9 +1,9 @@
 
 import { providers } from 'ethers';
 import { Callback, EthersLoader, EthersParser, IncomingEthEventSource, IncomingTransferEventSource, ModuleTransactionEventSource, MultisigTransactionEventSource, OutgoingTransferEventSource, SafeIndexer, SafeIndexerUserConfig, SettingsChangeEventSource } from 'safe-indexer-ts'
-import Account from '../../components/account/Account';
 import { NetworkConfig } from '../../components/provider/AppSettingsProvider';
 import { IndexerState } from '../state/indexer';
+import { Account } from './account';
 
 export const getIndexer = (account: Account, provider: providers.Provider, state: IndexerState, networkConfig: NetworkConfig, callback: Callback): SafeIndexer => {
     const loader = new EthersLoader(provider, [

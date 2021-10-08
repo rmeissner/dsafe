@@ -1,9 +1,9 @@
 import { providers } from "ethers";
 import { Callback, IndexerStatus, SafeIndexer, SafeInteraction } from "safe-indexer-ts";
-import Account from "../../components/account/Account";
 import { NetworkConfig } from "../../components/provider/AppSettingsProvider";
 import { InteractionsDAO } from "../db/interactions";
 import { IndexerState } from "../state/indexer";
+import { Account } from "../utils/account";
 import { getIndexer } from "../utils/indexer";
 
 

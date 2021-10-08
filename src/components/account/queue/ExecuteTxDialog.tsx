@@ -1,11 +1,9 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { styled } from '@mui/system'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { QueuedSafeTransaction } from '../../../logic/db/interactions'
-import { parseSafeSignature } from '../../../logic/utils/signatures'
 import { useAppSettings } from '../../provider/AppSettingsProvider'
 import { useQueueRepo } from '../../provider/QueueRepositoryProvider'
-import { useAccount } from '../Account'
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"

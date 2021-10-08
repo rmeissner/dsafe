@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import { QueueRepository } from "../../logic/account/QueueRepository";
-import { useAccount } from "../account/Account";
+import { useAccount } from "../account/Dashboard";
 import { useAppSettings } from "./AppSettingsProvider";
 
 

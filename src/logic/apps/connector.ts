@@ -12,7 +12,7 @@ import {
 import {
     providers
 } from 'ethers'
-import Account from '../../components/account/Account'
+import { Account } from '../utils/account'
 
 export interface MessageHandlers {
     onTransactionProposal: (transactions: BaseTransaction[], requestId: RequestId) => void

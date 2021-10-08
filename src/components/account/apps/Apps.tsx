@@ -4,12 +4,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { AppOption, defaultApps } from '../../../logic/apps/appList';
 import { AppUrlsDAO } from '../../../logic/db/app';
 import { Group, Row } from '../../../styled/tables';
+import { useDektopLayout } from '../../utils/media';
+import { drawerBleeding } from '../ResponsiveSidebar';
 import AppWindow from './AppWindow';
 
 const Root = styled(Group)(({ theme }) => ({
-  textAlign: "center",
-  width: "100vw",
-  height: "100vh"
 }))
 
 function Apps() {
@@ -18,6 +17,7 @@ function Apps() {
   const [appUrlError, setAppUrlError] = useState("")
   const [appUrlInput, setAppUrlInput] = useState(appUrl)
   const [appUrlsHistory, setAppUrlsHistory] = useState<AppOption[]>([])
+  const isDesktop = useDektopLayout()
 
   useEffect(() => {
     (async () => {
@@ -61,8 +61,13 @@ function Apps() {
     await appUrlsDao.add({ id: cleanUrl, timestamp: new Date().getTime() })
     setAppUrl(cleanUrl)
   }
+  const marginBottom = isDesktop ? 0 : drawerBleeding;
   return (
-    <Root>
+    <Root sx={{
+      textAlign: "center",
+      width: `100vw`,
+      height: `calc(100vh - ${marginBottom}px)`
+    }}>
       <Row>
         <Autocomplete
           id="free-solo-demo"

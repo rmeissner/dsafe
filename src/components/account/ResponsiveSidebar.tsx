@@ -27,7 +27,7 @@ const Puller = styled(Box)(({ theme }) => ({
 
 export const drawerBleeding = 64
 
-export const ResponsiveSidebar: React.FC<{ isDesktop: boolean, header?: React.ReactNode }> = ({ isDesktop, children, header }) => {
+export const ResponsiveSidebar: React.FC<{ isDesktop: boolean, header?: (expanded: boolean) => React.ReactNode }> = ({ isDesktop, children, header }) => {
     const [open, setOpen] = useState(true);
 
     const toggleDrawer = (newOpen: boolean) => () => {
@@ -69,7 +69,7 @@ export const ResponsiveSidebar: React.FC<{ isDesktop: boolean, header?: React.Re
                 }}
             >
                 <Puller />
-                {header}
+                {header?.(open)}
             </StyledBox>
             <StyledBox
                 sx={{
@@ -84,7 +84,7 @@ export const ResponsiveSidebar: React.FC<{ isDesktop: boolean, header?: React.Re
         </SwipeableDrawer>)
     }
     return (<Sidebar>
-        {header}
+        {header?.(true)}
         {children}
     </Sidebar>)
 }

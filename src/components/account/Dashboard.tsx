@@ -35,7 +35,7 @@ export const Dashboard: React.FC = () => {
         <TransactionRepositoryProvider>
             <QueueRepositoryProvider>
                 <Row>
-                    <ResponsiveSidebar isDesktop={isDesktop} header={<AccountHeader />}>
+                    <ResponsiveSidebar isDesktop={isDesktop} header={(expanded) => <AccountHeader expanded={expanded} />}>
                         <Queue />
                         <Transactions />
                     </ResponsiveSidebar>

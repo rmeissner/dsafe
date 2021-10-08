@@ -58,7 +58,8 @@ function Queue() {
 
   return (
     <Root>
-      <Button onClick={() => setShowNewTxDialog(true)}>Add</Button>
+      <hr />
+      <Button onClick={() => setShowNewTxDialog(true)}>Add Transaction</Button>
       {ququedTxs.map((tx) => <QueuedTxSummary transaction={tx} showDetails={(id) => setSelectedId(id)} />)}
       {creation}
       {details}

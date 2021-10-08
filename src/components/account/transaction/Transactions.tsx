@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Callback, SafeInteraction } from 'safe-indexer-ts';
-import { Button, styled } from '@mui/material';
+import { Button, styled, Typography } from '@mui/material';
 import { useAccount } from '../Dashboard';
 import SettingsDialog from '../../settings/SettingsDialog';
 import TxDetails from './TxDetails';
@@ -47,6 +47,7 @@ function Transactions() {
 
   return (
     <Root>
+      <hr />
       {txs.map((e) => <TxSummary interaction={e} showDetails={(id) => showDetails(id)} />)}
       {details}
     </Root>

@@ -1,5 +1,5 @@
 import { Typography } from "@mui/material"
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "../Dashboard"
 import makeBlockie from 'ethereum-blockies-base64';
 import { styled } from "@mui/system";
@@ -8,17 +8,20 @@ import { shortAddress } from "../../../logic/utils/address";
 import { Settings } from "@mui/icons-material";
 import SettingsDialog from "../../settings/SettingsDialog";
 import { useTransactionRepo } from "../../provider/TransactionRepositoryProvider";
+import { useQueueRepo } from "../../provider/QueueRepositoryProvider";
+import { Callback } from "safe-indexer-ts";
+import { QueueRepositoryUpdates } from "../../../logic/account/QueueRepository";
 
 const theme = {
     identicon: {
-      size: {
-        xs: '10px',
-        sm: '16px',
-        md: '32px',
-        lg: '40px',
-        xl: '48px',
-        xxl: '60px',
-      },
+        size: {
+            xs: '10px',
+            sm: '16px',
+            md: '32px',
+            lg: '40px',
+            xl: '48px',
+            xxl: '60px',
+        },
     },
 }
 
@@ -31,16 +34,46 @@ const StyledImg = styled('img')<{ size: ThemeIdenticonSize }>(({ theme: Theme, s
     borderRadius: '50%'
 }));
 
-export const AccountHeader: React.FC = () => {
+export const AccountHeader: React.FC<{ expanded: boolean }> = ({ expanded }) => {
     const [showSettings, setShowSettings] = useState<boolean>(false)
+    const [queueSize, setQueueSize] = useState<number>(0)
     const account = useAccount()
     const iconSrc = useMemo(() => makeBlockie(account.address), [account]);
     const txRepo = useTransactionRepo()
+    const queueRepo = useQueueRepo()
 
+    // TODO: we have this logic in multiple places. Should be extracted
+    const loadQueuedTxs = useCallback(async () => {
+        try {
+            setQueueSize((await queueRepo.getQueuedTxs()).length)
+        } catch (e) {
+            console.error(e)
+        }
+    }, [queueRepo, setQueueSize])
+
+    useEffect(() => {
+        const callback: Callback = {
+            onNewInteractions: loadQueuedTxs
+        }
+        txRepo.registerCallback(callback)
+        return () => txRepo.unregisterCallback(callback)
+    }, [txRepo, loadQueuedTxs])
+
+    useEffect(() => {
+        const callback: QueueRepositoryUpdates = {
+            onNewTx: loadQueuedTxs
+        }
+        queueRepo.registerCallback(callback)
+        return () => queueRepo.unregisterCallback(callback)
+    }, [queueRepo, loadQueuedTxs])
+
+    useEffect(() => {
+      loadQueuedTxs()
+    }, [loadQueuedTxs])
 
     const reindex = useCallback(async () => {
         txRepo.reindex()
-      }, [txRepo])
+    }, [txRepo])
 
     return <Row sx={{
         paddingX: '16px',
@@ -54,7 +87,10 @@ export const AccountHeader: React.FC = () => {
             <Typography sx={{ fontFamily: 'Monospace' }} >{shortAddress(account.address)}</Typography>
             Chain {account.chainId}
         </Group>
-        <Settings onClick={() => setShowSettings(true)} />
+        {expanded ? (
+            <Settings onClick={() => setShowSettings(true)} />
+        ) : queueSize.toString()
+        }
         <SettingsDialog open={showSettings} handleClose={() => setShowSettings(false)} reindex={reindex} />
     </Row>
 }

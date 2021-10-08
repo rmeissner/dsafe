@@ -15,35 +15,17 @@ function Transactions() {
   const account = useAccount()
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
   const [txs, setTxs] = useState<SafeInteraction[]>([])
-  const [status, setStatus] = useState<string>("")
-  const [showSettings, setShowSettings] = useState<boolean>(false)
   const accountRepo = useTransactionRepo()
 
   useEffect(() => {
     const callback: Callback = {
       onNewInteractions: () => {
         accountRepo.getAllTxs().then((loaded) => setTxs(loaded))
-      },
-      onStatusUpdate: (update) => {
-        switch (update.type) {
-          case "up_to_date":
-            setStatus(`Up to date with block ${update.latestBlock}`)
-            break;  
-          case "processing":
-            setStatus(`Indexing block ${update.fromBlock}/${update.latestBlock}`)
-            break;
-          case "aborted":
-            setStatus(`Indexing aborted: ${update.reason}`)
-            break;
-          default:
-            setStatus("")
-            break;
-        }
       }
     }
     accountRepo.registerCallback(callback)
     return () => accountRepo.unregisterCallback(callback)
-  }, [accountRepo, txs, setTxs, setStatus])
+  }, [accountRepo, txs, setTxs])
 
   useEffect(() => {
     // Reset id if account changes
@@ -53,13 +35,6 @@ function Transactions() {
   const showDetails = useCallback(async (id) => {
     setSelectedId(id)
   }, [setSelectedId])
-
-  const reindex = useCallback(async () => {
-    if (await accountRepo.reindex()) {
-      accountRepo.getAllTxs().then((loaded) => setTxs(loaded))
-      setStatus("Waiting for reindexing")
-    }
-  }, [accountRepo, setStatus])
 
   useEffect(() => {
     setTxs([])
@@ -72,12 +47,7 @@ function Transactions() {
 
   return (
     <Root>
-      <>
-        {status}<br />
-        <Button onClick={() => setShowSettings(true)}>Settings</Button>
-      </>
       {txs.map((e) => <TxSummary interaction={e} showDetails={(id) => showDetails(id)} />)}
-      <SettingsDialog open={showSettings} handleClose={() => setShowSettings(false)} reindex={reindex} />
       {details}
     </Root>
   );

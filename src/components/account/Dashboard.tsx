@@ -4,17 +4,13 @@ import Transactions from './transaction/Transactions';
 import TransactionRepositoryProvider from '../provider/TransactionRepositoryProvider';
 import QueueRepositoryProvider from '../provider/QueueRepositoryProvider';
 import Queue from './queue/Queue';
-import { Group, Row } from '../../styled/tables';
+import { Row } from '../../styled/tables';
 import Apps from './apps/Apps';
 import { Account, parseAccount } from '../../logic/utils/account';
-import { styled } from '@mui/system';
 import { useDektopLayout } from '../utils/media';
-
-const Sidebar = styled(Group)(({ theme }) => ({
-    height: "100vh",
-    width: "400px",
-    overflowY: "scroll"
-}))
+import { ResponsiveSidebar } from './ResponsiveSidebar';
+import { Typography } from '@mui/material';
+import AccountHeader from './header/AccountHeader';
 
 interface Path {
     account: string
@@ -39,11 +35,11 @@ export const Dashboard: React.FC = () => {
         <TransactionRepositoryProvider>
             <QueueRepositoryProvider>
                 <Row>
-                    <Sidebar>
+                    <ResponsiveSidebar isDesktop={isDesktop} header={<AccountHeader />}>
                         <Queue />
                         <Transactions />
-                    </Sidebar>
-                    {isDesktop && <Apps />}
+                    </ResponsiveSidebar>
+                    <Apps />
                 </Row>
             </QueueRepositoryProvider>
         </TransactionRepositoryProvider>

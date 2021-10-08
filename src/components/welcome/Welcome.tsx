@@ -1,9 +1,10 @@
 import { Button, TextField } from '@mui/material';
 import { styled } from '@mui/system';
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useHistory } from 'react-router';
+import { AccountsDAO, StoredAccount } from '../../logic/db/app';
 import { parseAccount } from '../../logic/utils/account';
-import { Group, Row } from '../../styled/tables';
+import { Entry, Group, LongText, Row } from '../../styled/tables';
 
 const Root = styled('div')(({ theme }) => ({
     textAlign: "center",
@@ -13,19 +14,31 @@ const Root = styled('div')(({ theme }) => ({
 export const Welcome: React.FC = () => {
     const [addressInput, setAddressInput] = useState("")
     const [addressError, setAddressError] = useState("")
+    const [accountHistory, setAccountHistory] = useState<StoredAccount[]>([])
     const history = useHistory()
+    const accountsDao = useMemo(() => new AccountsDAO(), [])
 
     const handleAddressInput = (address: string) => {
         setAddressInput(address)
         setAddressError("")
     }
 
-    const openAccount = (address: string) => {
+    useEffect(() => {
+        (async () => {
+            setAccountHistory(await accountsDao.getAll())
+        })()
+    }, [setAccountHistory])
+
+    const openAccount = async (address: string) => {
         const account = parseAccount(address)
         if (!account) {
             setAddressError("Invalid account!")
             return
         }
+        accountsDao.add({
+            ...account,
+            timestamp: new Date().getTime()
+        })
         history.push("/" + account.id)
     }
 
@@ -33,6 +46,13 @@ export const Welcome: React.FC = () => {
         Welcome!<br /><br />
         <TextField label="Account address" onChange={(e) => handleAddressInput(e.target.value)} value={addressInput} error={!!addressError} helperText={addressError} fullWidth /><br />
         <Button onClick={() => openAccount(addressInput)}>Open</Button>
+        {accountHistory.map((account) => {
+            return (
+                <Entry onClick={() => openAccount(account.id)}>
+                    <LongText>{account.id}</LongText>
+                </Entry>
+            )
+        })}
     </Root>
 }
 

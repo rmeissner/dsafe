@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
 import { styled } from '@mui/system'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Entry, Group, Header, LongText } from '../../../styled/tables';
@@ -9,6 +9,7 @@ import AddSignatureDialog from './AddSignatureDialog';
 import SignTransactionDialog from './SignTransactionDialog';
 import ExecuteTxDialog from './ExecuteTxDialog';
 import { shareableSignatureString } from '../../../logic/utils/signatures';
+import { useDektopLayout } from '../../utils/media';
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -60,7 +61,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
         loadSignatures()
     }, [loadSignatures])
     return <>
-        <TxDialog open={!!id && !showAddSignature} onClose={handleClose} maxWidth="md" fullWidth>
+        <TxDialog open={!!id && !showAddSignature} onClose={handleClose} maxWidth="md" fullWidth fullScreen={!useDektopLayout()}>
             <DialogTitle>Transaction Details</DialogTitle>
             <DialogContent>
                 {transaction ? (
@@ -101,6 +102,9 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
                     <>"Unknown details"</>
                 )}
             </DialogContent>
+            <DialogActions>
+            <Button onClick={handleClose}>Close</Button>
+            </DialogActions>
         </TxDialog>
         <AddSignatureDialog open={showAddSignature} handleClose={() => setShowAddSignature(false) } handleNewSignature={loadSignatures} safeTxHash={id} />
         <SignTransactionDialog open={showSignTransaction} handleClose={() => setShowSignTransaction(false) } handleNewSignature={loadSignatures} transaction={transaction} />

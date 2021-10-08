@@ -4,7 +4,10 @@ import { ethers, BigNumber } from 'ethers'
 import React, { useEffect, useMemo, useState } from 'react'
 import { QueuedSafeTransaction } from '../../../logic/db/interactions'
 import { SafeTransaction, MetaTransaction } from '../../../logic/models/transactions'
+import { buildTx } from '../../../logic/utils/proposing'
 import { useQueueRepo } from '../../provider/QueueRepositoryProvider'
+import { useDektopLayout } from '../../utils/media'
+import { useAccount } from '../Dashboard'
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -19,21 +22,6 @@ export interface Props {
     requestId?: string
 }
 
-const buildDefaultTx = (transactions?: MetaTransaction[]): MetaTransaction => {
-    if (!transactions || transactions.length === 0) {
-        return {
-            to: "",
-            value: "",
-            data: "",
-            operation: 0
-        }
-    }
-    if (transactions.length === 1) {
-        return transactions[0]
-    }
-    throw Error("")
-}
-
 export const ProposeTxs: React.FC<Props> = ({ open, handleClose, onConfirm, onReject, requestId, transactions }) => {
     const [toString, setToString] = useState("")
     const [valueString, setValueString] = useState("")
@@ -41,6 +29,7 @@ export const ProposeTxs: React.FC<Props> = ({ open, handleClose, onConfirm, onRe
     const [operationString, setOperationString] = useState("")
     const [nonceString, setNonceString] = useState("")
     const queuedRepo = useQueueRepo()
+    const account = useAccount()
 
     useEffect(() => {
         if (!open) return
@@ -50,12 +39,12 @@ export const ProposeTxs: React.FC<Props> = ({ open, handleClose, onConfirm, onRe
     }, [queuedRepo, open])
 
     useEffect(() => {
-        const defaultTx = buildDefaultTx(transactions)
+        const defaultTx = buildTx(account, transactions)
         setToString(defaultTx.to)
         setValueString(defaultTx.value)
         setDataString(defaultTx.data)
         setOperationString(defaultTx.operation.toString())
-    }, [transactions])
+    }, [account, transactions])
 
     const cancelCreation = () => {
         onReject?.("Canceled", requestId)
@@ -89,8 +78,7 @@ export const ProposeTxs: React.FC<Props> = ({ open, handleClose, onConfirm, onRe
             console.error(e)
         }
     }
-
-    return <TxDialog open={open} onClose={cancelCreation} maxWidth="md" fullWidth>
+    return <TxDialog open={open} onClose={cancelCreation} maxWidth="md" fullWidth fullScreen={!useDektopLayout()}>
         <DialogTitle>Add Tx</DialogTitle>
         <DialogContent>
             <TextField label="To" onChange={(e) => setToString(e.target.value)} value={toString} fullWidth /><br />

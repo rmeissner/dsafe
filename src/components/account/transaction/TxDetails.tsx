@@ -1,8 +1,9 @@
-import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { styled } from '@mui/system'
 import React, { ReactElement, useEffect, useState } from 'react'
 import { SafeInteraction } from 'safe-indexer-ts'
 import { useTransactionRepo } from '../../provider/TransactionRepositoryProvider'
+import { useDektopLayout } from '../../utils/media'
 import ModuleTxDetails from './details/ModuleTxDetails'
 import MultisigTxDetails from './details/MultisigTxDetails'
 import TransferTxDetails from './details/TransferTxDetails'
@@ -44,11 +45,14 @@ export const TxDetails: React.FC<Props> = ({ id, handleClose }) => {
         }
         loadInteraction()
     }, [id, accountRepo, setInteraction, handleClose])
-    return <TxDialog open={!!id} onClose={handleClose} maxWidth="md" fullWidth>
+    return <TxDialog open={!!id} onClose={handleClose} maxWidth="md" fullWidth fullScreen={!useDektopLayout()}>
         <DialogTitle>Transaction Details</DialogTitle>
         <DialogContent>
             {renderDetails(interaction)}
         </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Close</Button>
+        </DialogActions>
     </TxDialog>
 }
 

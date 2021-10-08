@@ -1,6 +1,7 @@
-import { Autocomplete, Button, TextField } from '@mui/material';
+import { Autocomplete, TextField } from '@mui/material';
 import { styled } from '@mui/system';
 import { useState, useMemo, useEffect } from 'react';
+import { AppOption, defaultApps } from '../../../logic/apps/appList';
 import { AppUrlsDAO } from '../../../logic/db/app';
 import { Group, Row } from '../../../styled/tables';
 import AppWindow from './AppWindow';
@@ -13,27 +14,49 @@ const Root = styled(Group)(({ theme }) => ({
 
 function Apps() {
   const appUrlsDao = useMemo(() => new AppUrlsDAO(), [])
-  const [appUrl, setAppUrl] = useState("https://apps.gnosis-safe.io/wallet-connect")
+  const [appUrl, setAppUrl] = useState(defaultApps[0].url)
   const [appUrlError, setAppUrlError] = useState("")
   const [appUrlInput, setAppUrlInput] = useState(appUrl)
-  const [appUrlsHistory, setAppUrlsHistory] = useState<string[]>([])
+  const [appUrlsHistory, setAppUrlsHistory] = useState<AppOption[]>([])
 
   useEffect(() => {
     (async () => {
-      setAppUrlsHistory((await appUrlsDao.getAll()).map(appUrl => appUrl.id))
+      const appHistory = (await appUrlsDao.getAll()).map(appUrl => {
+        return {
+          section: "History",
+          title: appUrl.id,
+          url: appUrl.id
+        }
+      })
+      setAppUrlsHistory(defaultApps.concat(appHistory))
     })()
   }, [setAppUrlsHistory, appUrl])
 
-  const handleInputChange = (input: string) => {
-    setAppUrlInput(input)
+  const handleInputChange = (input: string | AppOption | null, openUrl?: boolean) => {
+    let newValue: string
+    if (!input) {
+      newValue = ""
+    } else if (typeof input === "string") {
+      newValue = input
+    } else {
+      newValue = input.url
+    }
+    setAppUrlInput(newValue)
     setAppUrlError("")
+
+    if (openUrl) {
+      openAppUrl(newValue)
+    }
   }
 
   const openAppUrl = async (appUrl: string) => {
-    const cleanUrl = appUrl.trim()
+    let cleanUrl = appUrl.trim()
     if (cleanUrl.length === 0) {
       setAppUrlError("Empty App Url is not allowed")
       return
+    }
+    if (!cleanUrl.startsWith("http")) {
+      cleanUrl = "https://" + cleanUrl
     }
     await appUrlsDao.add({ id: cleanUrl, timestamp: new Date().getTime() })
     setAppUrl(cleanUrl)
@@ -46,20 +69,25 @@ function Apps() {
           freeSolo
           fullWidth
           options={appUrlsHistory}
-          onChange={(e, newValue) => handleInputChange(newValue || "")}
+          defaultValue={defaultApps[0]}
+          groupBy={(option) => option.section}
+          getOptionLabel={(option: AppOption | string) => {
+            if (typeof option === "string") return option
+            return option.title
+          }}
+          onChange={(e, newValue) => handleInputChange(newValue, !!newValue && newValue !== "")}
           renderInput={(params) =>
             <TextField
               {...params}
               label="App Url"
-              margin="normal"
               value={appUrlInput}
               error={!!appUrlError}
               helperText={appUrlError}
+              variant="filled"
               onChange={(e) => handleInputChange(e.target.value)}
             />
           }
         />
-        <Button onClick={() => { openAppUrl(appUrlInput) }}>GO</Button>
       </Row>
       <AppWindow appUrl={appUrl} />
     </Root>

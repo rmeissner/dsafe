@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, styled } from '@mui/material';
 import { QueuedSafeTransaction } from '../../../logic/db/interactions';
-import CreateTx from './CreateTxDialog';
 import { useQueueRepo } from '../../provider/QueueRepositoryProvider';
 import QueuedTxSummary from './QueuedTxSummary';
 import QueuedTxDetails from './QueuedTxDetails';
 import { useTransactionRepo } from '../../provider/TransactionRepositoryProvider';
 import { Callback } from 'safe-indexer-ts';
 import { QueueRepositoryUpdates } from '../../../logic/account/QueueRepository';
+import ProposeTxs from './ProposeTxsDialog';
 
 const Root = styled('div')(({ theme }) => ({
   textAlign: "center"
@@ -49,7 +49,7 @@ function Queue() {
   }, [loadQueuedTxs])
 
   const creation = useMemo(() => {
-    return <CreateTx open={showNewTxDialog} handleClose={() => setShowNewTxDialog(false)} handleTx={() => loadQueuedTxs() } />
+    return <ProposeTxs open={showNewTxDialog} handleClose={() => setShowNewTxDialog(false)} onConfirm={() => loadQueuedTxs() } />
   }, [showNewTxDialog, setShowNewTxDialog])
 
   const details = useMemo(() => {

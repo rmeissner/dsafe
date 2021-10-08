@@ -7,7 +7,7 @@ import {
 } from '@gnosis.pm/safe-apps-sdk'
 import { useAccount } from '../Dashboard';
 import { useAppSettings } from '../../provider/AppSettingsProvider';
-import ProposeTxs from './ProposeTxsDialog';
+import ProposeTxs from '../queue/ProposeTxsDialog';
 import { QueuedSafeTransaction } from '../../../logic/db/interactions';
 
 const AppFrame = styled('iframe')(({ theme }) => ({

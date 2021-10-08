@@ -8,6 +8,7 @@ import { Group, Row } from '../../styled/tables';
 import Apps from './apps/Apps';
 import { Account, parseAccount } from '../../logic/utils/account';
 import { styled } from '@mui/system';
+import { useDektopLayout } from '../utils/media';
 
 const Sidebar = styled(Group)(({ theme }) => ({
     height: "100vh",
@@ -29,6 +30,7 @@ export const useAccount = () => {
 
 export const Dashboard: React.FC = () => {
     const { account } = useParams<Path>() //0x969c350577B6CD3A8E963cBB8D9c728B840c459e
+    const isDesktop = useDektopLayout();
     const value = parseAccount(account)
     if (!value) return (<>
         "Invalid account"
@@ -41,7 +43,7 @@ export const Dashboard: React.FC = () => {
                         <Queue />
                         <Transactions />
                     </Sidebar>
-                    <Apps />
+                    {isDesktop && <Apps />}
                 </Row>
             </QueueRepositoryProvider>
         </TransactionRepositoryProvider>

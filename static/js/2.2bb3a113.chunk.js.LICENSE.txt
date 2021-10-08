@@ -4,13 +4,14 @@ object-assign
 @license MIT
 */
 
-/**
- * A better abstraction over CSS.
+/*!
+ * The buffer module from node.js, for the browser.
  *
- * @copyright Oleg Isonen (Slobodskoi) / Isonen 2014-present
- * @website https://github.com/cssinjs/jss
- * @license MIT
+ * @author   Feross Aboukhadijeh <http://feross.org>
+ * @license  MIT
  */
+
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
  * [js-sha3]{@link https://github.com/emn178/js-sha3}
@@ -19,6 +20,12 @@ object-assign
  * @author Chen, Yi-Cyuan [emn178@gmail.com]
  * @copyright Chen, Yi-Cyuan 2015-2016
  * @license MIT
+ */
+
+/** @license MUI v5.0.0
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
  */
 
 /** @license React v0.20.2

@@ -13,6 +13,10 @@ import {
     providers
 } from 'ethers'
 import { Account } from '../utils/account'
+import { chainIdToNetwork } from '../utils/chainIdToNetwork'
+
+type LegacyMethods = 'getEnvInfo'
+type SDKMethods = Methods | LegacyMethods
 
 export interface MessageHandlers {
     onTransactionProposal: (transactions: BaseTransaction[], requestId: RequestId) => void
@@ -28,7 +32,7 @@ export class FrameCommunicator {
     ) { }
 
     handleMessage(
-        method: Methods,
+        method: SDKMethods,
         params: unknown,
         requestId: RequestId
     ) {
@@ -50,10 +54,16 @@ export class FrameCommunicator {
                 break
             }
 
+            case 'getEnvInfo': {
+                this.sendResponse({ txServiceUrl: "" }, requestId)
+                break
+            }
+
             case 'getSafeInfo': {
                 this.sendResponse({
                     safeAddress: this.info.address,
-                    chainId: this.info.chainId
+                    chainId: this.info.chainId,
+                    network: chainIdToNetwork[this.info.chainId],
                 }, requestId)
                 break
             }

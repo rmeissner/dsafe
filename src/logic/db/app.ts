@@ -5,16 +5,29 @@ export const ACCOUNTS_STORE = "accounts"
 export const ACCOUNTS_KEY = "id"
 export const ACCOUNTS_INDEX = "timestamp"
 
+export const APP_URLS_STORE = "app_urls"
+export const APP_URLS_KEY = "id"
+export const APP_URLS_INDEX = "timestamp"
+
 export interface StoredAccount extends Account {
+    timestamp: number
+}
+
+export interface StoredAppUrls {
+    id: string,
     timestamp: number
 }
 
 export class AppDB extends AbstractDB {
     constructor() {
-        super("app_state", 1, (db, oldVersion) => {
+        super("app_state", 2, (db, oldVersion) => {
             if (oldVersion < 1) {
                 const store = db.createObjectStore(ACCOUNTS_STORE, { keyPath: ACCOUNTS_KEY })
                 store.createIndex(ACCOUNTS_INDEX, ACCOUNTS_INDEX, { unique: false })
+            }
+            if (oldVersion < 2) {
+                const store = db.createObjectStore(APP_URLS_STORE, { keyPath: APP_URLS_KEY })
+                store.createIndex(APP_URLS_INDEX, APP_URLS_INDEX, { unique: false })
             }
         });
     }
@@ -28,5 +41,14 @@ export class AccountsDAO extends AbstractDAO<StoredAccount> {
     getAll(): Promise<StoredAccount[]> {
         return this.getAllByIndex(ACCOUNTS_INDEX)
     }
+}
 
+export class AppUrlsDAO extends AbstractDAO<StoredAppUrls> {
+    constructor() {
+        super(new AppDB(), APP_URLS_STORE)
+    }
+
+    getAll(): Promise<StoredAppUrls[]> {
+        return this.getAllByIndex(APP_URLS_INDEX)
+    }
 }

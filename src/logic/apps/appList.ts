@@ -1,5 +1,9 @@
 export const defaultApps: AppOption[] = [
     {
+        title: "Balances",
+        url: "https://rimeissner.dev/sapp-balances/"
+    },
+    {
         title: "WalletConnect",
         url: "https://apps.gnosis-safe.io/wallet-connect"
     },

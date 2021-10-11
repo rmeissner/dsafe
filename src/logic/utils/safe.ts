@@ -1,4 +1,4 @@
-import { Contract } from "@ethersproject/contracts";
+import { Contract, PopulatedTransaction } from "@ethersproject/contracts";
 import { safeInterface, SignedSafeTransaction } from "safe-indexer-ts";
 import { ethers, BigNumber, Signer } from "ethers";
 import { SafeTransaction } from "../models/transactions";
@@ -59,6 +59,21 @@ export class Safe {
         )
         const version: string = await this.safeContract.VERSION()
         return { hash, version }
+    }
+
+    populateTx(tx: SignedSafeTransaction): Promise<PopulatedTransaction> {
+        return this.safeContract.populateTransaction.execTransaction(
+            tx.to,
+            tx.value, 
+            tx.data, 
+            tx.operation, 
+            tx.safeTxGas, 
+            tx.baseGas, 
+            tx.gasPrice, 
+            tx.gasToken, 
+            tx.refundReceiver, 
+            tx.signatures
+        )
     }
 }
 

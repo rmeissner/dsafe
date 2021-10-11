@@ -53,6 +53,11 @@ export class QueueRepository {
         return queuedTx
     }
 
+    async deleteTx(id: string): Promise<void> {
+        await this.queueDao.remove(id)
+        this.notifyNewTxs()
+    }
+
     async getTx(hash: string): Promise<QueuedSafeTransaction> {
         return this.queueDao.get(hash)
     }

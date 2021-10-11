@@ -34,7 +34,11 @@ export const ProposeTxs: React.FC<Props> = ({ open, handleClose, onConfirm, onRe
     useEffect(() => {
         if (!open) return
         (async () => {
-            setNonceString(await queuedRepo.getNextNonce())
+            try {
+                setNonceString(await queuedRepo.getNextNonce())
+            } catch (e) {
+                console.error(e)
+            }
         })()
     }, [queuedRepo, open])
 

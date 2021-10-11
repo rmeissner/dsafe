@@ -5,6 +5,7 @@ import { TransferDetails, TransferTx } from 'safe-indexer-ts'
 import { styled } from '@mui/system';
 import { Typography } from '@mui/material';
 import { Entry, Group, Header, LongText } from '../../../../styled/tables';
+import AddressInfo from '../../../utils/AddressInfo';
 
 export interface Props {
     transaction: TransferTx
@@ -53,16 +54,16 @@ export const TransferTxDetails: React.FC<Props> = ({ transaction }) => {
         </Entry>
         <Header>From:</Header>
         <Entry>
-            <Typography>{transaction.sender}</Typography>
+            <AddressInfo address={transaction.sender} />
         </Entry>
         <Header>To:</Header>
         <Entry>
-            <Typography>{transaction.receipient}</Typography>
+            <AddressInfo address={transaction.receipient} />
         </Entry>
         {renderDetails(transaction.details)}
         <Header>Ethereum Transaction:</Header>
         <Entry>
-            <Typography>{transaction.txHash}</Typography>
+            <LongText>{transaction.txHash}</LongText>
         </Entry>
     </Group>
 }

@@ -5,6 +5,8 @@ import { MultisigTx } from 'safe-indexer-ts'
 import { Typography } from '@mui/material';
 import { Entry, Group, Header, LongText } from '../../../../styled/tables';
 import TxEvents from './TxEvents';
+import TxData from '../../../utils/TxData';
+import AddressInfo from '../../../utils/AddressInfo';
 
 export interface Props {
     transaction: MultisigTx
@@ -26,11 +28,11 @@ export const MultisigTxDetails: React.FC<Props> = ({ transaction }) => {
         </Entry>
         <Header>Ethereum Transaction:</Header>
         <Entry>
-            <Typography>{transaction.txHash}</Typography>
+            <LongText>{transaction.txHash}</LongText>
         </Entry>
         <Header>Id:</Header>
         <Entry>
-            <Typography>{transaction.safeTxHash}</Typography>
+            <LongText>{transaction.safeTxHash}</LongText>
         </Entry>
         {transaction.details ? (
             <Group>
@@ -40,16 +42,14 @@ export const MultisigTxDetails: React.FC<Props> = ({ transaction }) => {
                 </Entry>
                 <Header>To:</Header>
                 <Entry>
-                    <Typography>{transaction.details.to}</Typography>
+                    <AddressInfo address={transaction.details.to} />
                 </Entry>
                 <Header>Value:</Header>
                 <Entry>
                     <Typography>{transaction.details.value}</Typography>
                 </Entry>
                 <Header>Data:</Header>
-                <Entry>
-                    <LongText>{transaction.details.data}</LongText>
-                </Entry>
+                <TxData data={transaction.details.data} />
                 <Header>Nonce:</Header>
                 <Entry>
                     <LongText>{transaction.details.nonce}</LongText>

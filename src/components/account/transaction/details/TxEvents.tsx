@@ -18,7 +18,7 @@ export const TxEvents: React.FC<Props> = ({ interactions }) => {
     if (interactions.length == 0) return <></>
     return <>
         <Header>Events:</Header>
-        <Group>
+        <Group sx={{ textAlign: "left" }}>
             {interactions.map((e) => (<Entry>
                 {e.interaction ? <TxSummary interaction={e.interaction} hideDate /> : eventSummary(e.event)}
             </Entry>))}

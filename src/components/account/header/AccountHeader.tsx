@@ -11,6 +11,7 @@ import { useTransactionRepo } from "../../provider/TransactionRepositoryProvider
 import { useQueueRepo } from "../../provider/QueueRepositoryProvider";
 import { Callback } from "safe-indexer-ts";
 import { QueueRepositoryUpdates } from "../../../logic/account/QueueRepository";
+import { useCopyAddress } from "../../utils/media";
 
 const theme = {
     identicon: {
@@ -75,6 +76,8 @@ export const AccountHeader: React.FC<{ expanded: boolean }> = ({ expanded }) => 
         txRepo.reindex()
     }, [txRepo])
 
+    const copyAddress = useCopyAddress(account.address)
+
     return <Row sx={{
         paddingX: '16px',
         width: `calc(100% - 32px)`,
@@ -83,7 +86,7 @@ export const AccountHeader: React.FC<{ expanded: boolean }> = ({ expanded }) => 
         alignItems: 'center'
     }}>
         <StyledImg src={iconSrc} size="md" />
-        <Group sx={{ paddingX: '8px', textAlign: 'center' }}>
+        <Group sx={{ paddingX: '8px', textAlign: 'center' }} onClick={copyAddress} >
             <Typography sx={{ fontFamily: 'Monospace' }} >{shortAddress(account.address)}</Typography>
             Chain {account.chainId}
         </Group>

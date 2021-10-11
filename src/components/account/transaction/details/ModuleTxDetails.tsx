@@ -5,6 +5,8 @@ import { ModuleTx } from 'safe-indexer-ts'
 import { Entry, Group, Header, LongText } from '../../../../styled/tables';
 import { Typography } from '@mui/material';
 import TxEvents from './TxEvents';
+import TxData from '../../../utils/TxData';
+import AddressInfo from '../../../utils/AddressInfo';
 
 export interface Props {
     transaction: ModuleTx
@@ -26,11 +28,11 @@ export const ModuleTxDetails: React.FC<Props> = ({ transaction }) => {
         </Entry>
         <Header>Module:</Header>
         <Entry>
-            <Typography>{transaction.module}</Typography>
+            <AddressInfo address={transaction.module} />
         </Entry>
         <Header>Ethereum Transaction:</Header>
         <Entry>
-            <Typography>{transaction.txHash}</Typography>
+            <LongText>{transaction.txHash}</LongText>
         </Entry>
         {transaction.details ? (
             <Group>
@@ -40,16 +42,14 @@ export const ModuleTxDetails: React.FC<Props> = ({ transaction }) => {
                 </Entry>
                 <Header>To:</Header>
                 <Entry>
-                    <Typography>{transaction.details.to}</Typography>
+                    <AddressInfo address={transaction.details.to} />
                 </Entry>
                 <Header>Value:</Header>
                 <Entry>
                     <Typography>{transaction.details.value}</Typography>
                 </Entry>
                 <Header>Data:</Header>
-                <Entry>
-                    <LongText>{transaction.details.data}</LongText>
-                </Entry>
+                <TxData data={transaction.details.data} />
             </Group>
         ) : (
             <Entry>No details available</Entry>

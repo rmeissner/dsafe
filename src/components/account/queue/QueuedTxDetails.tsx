@@ -9,7 +9,15 @@ import AddSignatureDialog from './AddSignatureDialog';
 import SignTransactionDialog from './SignTransactionDialog';
 import ExecuteTxDialog from './ExecuteTxDialog';
 import { shareableSignatureString } from '../../../logic/utils/signatures';
-import { useDektopLayout } from '../../utils/media';
+import { copyToClipboard, useDektopLayout } from '../../utils/media';
+import TxData from '../../utils/TxData';
+import { useAccount } from '../Dashboard';
+import { BigNumber } from '@ethersproject/bignumber';
+import { useAppSettings } from '../../provider/AppSettingsProvider';
+import { Safe } from '../../../logic/utils/safe';
+import { buildSignatureBytes, prepareSignatures } from '../../../logic/utils/execution';
+import { PopulatedTransaction } from '@ethersproject/contracts';
+import AddressInfo from '../../utils/AddressInfo';
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -22,15 +30,27 @@ export interface Props {
 
 const shareSignature = (sig: SafeTransactionSignature) => {
     const shareText = shareableSignatureString(sig)
-    console.log({shareText})
-    navigator.clipboard.writeText(shareText)
+    copyToClipboard(shareText, "Signature copied to clipboard!")
 }
 
 export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
-    const [showAddSignature, setShowAddSignature] = useState<boolean>(false)
-    const [showSignTransaction, setShowSignTransaction] = useState<boolean>(false)
-    const [showExecuteTransaction, setShowExecuteTransaction] = useState<boolean>(false)
+    const [simulateLink, setSimulateLink] = useState<string | undefined>(undefined)
+    const [showAddSignature, setShowAddSignature] = useState(false)
+    const [showSignTransaction, setShowSignTransaction] = useState(false)
+    const [showExecuteTransaction, setShowExecuteTransaction] = useState(false)
     const repo = useQueueRepo()
+    const account = useAccount()
+    const { signer } = useAppSettings()
+
+    const deleteTx = useCallback(async(id?: string) => {
+        if (!id) return
+        try {
+            await repo.deleteTx(id)
+            handleClose()
+        } catch (e) {
+            console.error(e)
+        }
+    }, [repo, handleClose])
 
     const [transaction, setTransaction] = useState<QueuedSafeTransaction | undefined>(undefined)
     useEffect(() => {
@@ -52,7 +72,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
         if (!id) return
         try {
             setSignatures(await repo.getSignatures(id))
-        } catch(e) {
+        } catch (e) {
             console.error(e)
         }
     }, [id, repo, setSignatures])
@@ -60,6 +80,49 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
         setSignatures(undefined)
         loadSignatures()
     }, [loadSignatures])
+    useEffect(() => {
+        if (!transaction || transaction.operation !== 0) {
+            setSimulateLink(undefined)
+            return
+        }
+        (async () => {
+            let populatedTx: PopulatedTransaction | undefined
+            if (signer && signatures) {
+                try {
+                    const submitterAddress = await signer.getAddress()
+                    const safe = new Safe(account.address, signer)
+                    const status = await safe.status()
+                    const signatureBytes = buildSignatureBytes(await prepareSignatures(status, transaction, signatures, submitterAddress))
+                    populatedTx = await safe.populateTx({
+                        signatures: signatureBytes,
+                        ...transaction
+                    })
+                    populatedTx.from = submitterAddress
+                } catch (e) {
+                    console.error(e)
+                }
+            }
+            try {
+                let link = "https://dashboard.tenderly.co/simulator/new?"
+                link += "network=" + account.chainId + "&"
+                console.log(populatedTx)
+                if (populatedTx) {
+                    link += "from=" + populatedTx.from + "&"
+                    link += "contractAddress=" + populatedTx.to + "&"
+                    link += "rawFunctionInput=" + populatedTx.data + "&"
+                    link += "value=" + BigNumber.from(populatedTx.value || "0").toString() + "&"
+                } else {
+                    link += "from=" + account.address + "&"
+                    link += "contractAddress=" + transaction.to + "&"
+                    link += "rawFunctionInput=" + transaction.data + "&"
+                    link += "value=" + BigNumber.from(transaction.value).toString() + "&"
+                }
+                setSimulateLink(link)
+            } catch (e) {
+                console.error(e)
+            }
+        })()
+    }, [transaction, account, signer, repo, signatures])
     return <>
         <TxDialog open={!!id && !showAddSignature} onClose={handleClose} maxWidth="md" fullWidth fullScreen={!useDektopLayout()}>
             <DialogTitle>Transaction Details</DialogTitle>
@@ -76,39 +139,39 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
                         </Entry>
                         <Header>To:</Header>
                         <Entry>
-                            <Typography>{transaction.to}</Typography>
+                            <AddressInfo address={transaction.to} />
                         </Entry>
                         <Header>Value:</Header>
                         <Entry>
                             <Typography>{transaction.value}</Typography>
                         </Entry>
                         <Header>Data:</Header>
-                        <Entry>
-                            <LongText>{transaction.data}</LongText>
-                        </Entry>
+                        <TxData data={transaction.data} />
                         <Header>Nonce:</Header>
                         <Entry>
                             <LongText>{transaction.nonce}</LongText>
                         </Entry>
                         <Header>Signatures:</Header>
                         {signatures?.map((sig) => (<Entry>
-                            <LongText onClick={() => { shareSignature(sig) }}>{sig.signer}</LongText>
+                            <AddressInfo onClick={() => { shareSignature(sig) }} address={sig.signer} />
                         </Entry>))}
                         <Button onClick={() => setShowSignTransaction(true)}>Sign</Button>
                         <Button onClick={() => setShowAddSignature(true)}>Add</Button>
                         <Button onClick={() => setShowExecuteTransaction(true)}>Execute</Button>
+                        <Button onClick={() => deleteTx(id)} color="error">Delete Tx</Button>
                     </Group>
                 ) : (
                     <>"Unknown details"</>
                 )}
             </DialogContent>
             <DialogActions>
-            <Button onClick={handleClose}>Close</Button>
+                {simulateLink && (<Button onClick={() => { window.open(simulateLink, "_blank") }}>Simulate</Button>)}
+                <Button onClick={handleClose}>Close</Button>
             </DialogActions>
         </TxDialog>
-        <AddSignatureDialog open={showAddSignature} handleClose={() => setShowAddSignature(false) } handleNewSignature={loadSignatures} safeTxHash={id} />
-        <SignTransactionDialog open={showSignTransaction} handleClose={() => setShowSignTransaction(false) } handleNewSignature={loadSignatures} transaction={transaction} />
-        <ExecuteTxDialog open={showExecuteTransaction} handleClose={() => setShowExecuteTransaction(false) } handleTxSubmitted={handleClose} transaction={transaction} />
+        <AddSignatureDialog open={showAddSignature} handleClose={() => setShowAddSignature(false)} handleNewSignature={loadSignatures} safeTxHash={id} />
+        <SignTransactionDialog open={showSignTransaction} handleClose={() => setShowSignTransaction(false)} handleNewSignature={loadSignatures} transaction={transaction} />
+        <ExecuteTxDialog open={showExecuteTransaction} handleClose={() => setShowExecuteTransaction(false)} handleTxSubmitted={handleClose} transaction={transaction} />
     </>
 }
 

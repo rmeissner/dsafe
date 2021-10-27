@@ -51,6 +51,8 @@ export const shareableSignatureString = (signature: SafeTransactionSignature): s
     return `${signature.data}:${signature.signer}:${signature.safeTxHash}:${signature.type}`
 }
 
+const signatureId = (signatureData: string, safeTxHash: string): string => ethers.utils.keccak256(signatureData + safeTxHash.slice(2))
+
 export const parseSafeSignature = async (signatureString: string, safeTxHash?: string, sigType?: SafeSignatureType): Promise<SafeTransactionSignature> => {
     const signatureParts = signatureString.split(":")
     if (
@@ -65,7 +67,7 @@ export const parseSafeSignature = async (signatureString: string, safeTxHash?: s
     const hash = safeTxHash || signatureParts[2]
     // TODO: verify signature type
     const type = sigType || signatureParts[3] as SafeSignatureType
-    const id = ethers.utils.keccak256(data + hash.slice(2))
+    const id = signatureId(data, hash)
     return {
         id,
         type,
@@ -160,9 +162,10 @@ const signEip712 = async (signer: Signer & TypedDataSigner, account: Account, tr
         // ToDo: check contract signature
         throw Error(`Unexpected signer! Expected ${signerAddress} got ${recoveredAddress}`)
     }
+    const id = signatureId(signatureString, transaction.id)
     return {
         type: "eip712",
-        id: signatureString,
+        id,
         signer: signerAddress,
         data: signatureString,
         safeTxHash: transaction.id
@@ -177,9 +180,10 @@ const signMessage = async (signer: Signer & TypedDataSigner, transaction: Queued
         // ToDo: check contract signature
         throw Error(`Unexpected signer! Expected ${signerAddress} got ${recoveredAddress}`)
     }
+    const id = signatureId(signatureString, transaction.id)
     return {
         type: "eth_sign",
-        id: signatureString,
+        id,
         signer: signerAddress,
         data: signatureString,
         safeTxHash: transaction.id
@@ -188,8 +192,9 @@ const signMessage = async (signer: Signer & TypedDataSigner, transaction: Queued
 
 export const buildPreValidatedSignature = async (signerAddress: string, transaction: QueuedSafeTransaction): Promise<SafeTransactionSignature> => {
     const signature = "0x000000000000000000000000" + signerAddress.slice(2) + "0000000000000000000000000000000000000000000000000000000000000000" + "01"
+    const id = signatureId(signature, transaction.id)
     return {
-        id: signature + transaction.id,
+        id,
         safeTxHash: transaction.id,
         type: "pre_validated",
         signer: signerAddress,

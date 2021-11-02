@@ -1,6 +1,8 @@
 import { ethers, providers, Signer } from "ethers";
 import { TypedDataSigner } from "@ethersproject/abstract-signer"
 import React, { useContext, useMemo, useState } from "react";
+import Onboard from 'bnc-onboard'
+import { on } from "stream";
 
 declare let window: any;
 
@@ -24,6 +26,8 @@ export interface AppSettings {
     updateCustomRpc: (value: string) => void
     updateNetworkConfig: (value: NetworkConfig) => void
     enable: () => Promise<string[]>
+    connect: (networkId: number) => Promise<boolean>
+    status: () => { connected: boolean }
 }
 
 const AppSettingsContext = React.createContext<AppSettings | undefined>(undefined);
@@ -37,6 +41,7 @@ export const useAppSettings = () => {
 export const AppSettingsProvider: React.FC = ({ children }) => {
     const [useCustomRpc, setUseCustomRpc] = useState(localStorage.getItem("app_state_use_rpc") === "true")
     const [customRpc, setCustomRpc] = useState(localStorage.getItem("app_state_rpc") || "")
+    const [connectedProvider, setConnectedProvider] = useState<any | null>(undefined)
     const storedConfig = localStorage.getItem("app_state_network_config")
     const [networkConfig, setNetworkConfig] = useState<NetworkConfig>(storedConfig ? JSON.parse(storedConfig) : defaultConfig)
     const toggleCustomRpc = (value: boolean) => {
@@ -60,18 +65,49 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
             if (!customRpc) return undefined
             return new ethers.providers.JsonRpcProvider(customRpc); // "https://bsc-dataseed1.ninicoin.io" 
         }
-        if (window.ethereum) {
-            return new ethers.providers.Web3Provider(window.ethereum)
+        if (connectedProvider) {
+            return new ethers.providers.Web3Provider(connectedProvider)
         }
         return undefined
-    }, [useCustomRpc, customRpc])
+    }, [useCustomRpc, customRpc, connectedProvider])
+    const onboard = useMemo(() => {
+        return Onboard({
+            networkId: 1,
+            subscriptions: {
+                wallet: wallet => {
+                    setConnectedProvider(wallet.provider)
+                    console.log(wallet.provider)
+                }
+            }
+        });
+    }, [])
+    const status = (): { connected: boolean } => {
+        try {
+            const state = onboard.getState()
+            console.log(state)
+            return {
+                connected: !!state.address
+            }
+        } catch (e) {
+            return {
+                connected: false
+            }
+        }
+    }
+    const connect = async (networkId: number): Promise<boolean> => {
+        onboard.config({ networkId })
+        if (await onboard.walletSelect())
+            return await onboard.walletCheck();
+        return false
+    }
     const enable = async (): Promise<string[]> => {
         if (window.ethereum) {
             return window.ethereum.enable()
         }
         return []
     }
-    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer: provider?.getSigner(), networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, enable }}>
+    console.log({ provider, connectedProvider })
+    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer: provider?.getSigner(), networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, enable, connect, status }}>
         {children}
     </AppSettingsContext.Provider>
 }

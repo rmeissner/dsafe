@@ -11,6 +11,8 @@ import { useDektopLayout } from '../utils/media';
 import { ResponsiveSidebar } from './ResponsiveSidebar';
 import { Typography } from '@mui/material';
 import AccountHeader from './header/AccountHeader';
+import { useAppSettings } from '../provider/AppSettingsProvider';
+import SignerInfo from './signer/SignerInfo';
 
 interface Path {
     account: string
@@ -36,6 +38,7 @@ export const Dashboard: React.FC = () => {
             <QueueRepositoryProvider>
                 <Row>
                     <ResponsiveSidebar isDesktop={isDesktop} header={(expanded) => <AccountHeader expanded={expanded} />}>
+                        <SignerInfo />
                         <Queue />
                         <Transactions />
                     </ResponsiveSidebar>

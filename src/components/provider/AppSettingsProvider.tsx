@@ -1,8 +1,9 @@
 import { ethers, providers, Signer } from "ethers";
 import { TypedDataSigner } from "@ethersproject/abstract-signer"
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import Onboard from 'bnc-onboard'
-import { on } from "stream";
+import chains from '../../logic/utils/chains.json'
+import { API, Wallet, WalletInitOptions, WalletModule } from "bnc-onboard/dist/src/interfaces";
 
 declare let window: any;
 
@@ -16,18 +17,123 @@ const defaultConfig: NetworkConfig = {
     maxBlocks: 1000
 }
 
+export interface SignerInfo {
+    signerAddress?: string
+}
+
 export interface AppSettings {
     readonly customRpc: string,
     readonly useCustomRpc: boolean,
     readonly provider: providers.JsonRpcProvider | undefined,
     readonly signer: Signer & TypedDataSigner | undefined,
+    readonly safeSigner: SafeSigner,
     readonly networkConfig: NetworkConfig,
     toggleCustomRpc: (value: boolean) => void
     updateCustomRpc: (value: string) => void
     updateNetworkConfig: (value: NetworkConfig) => void
-    enable: () => Promise<string[]>
-    connect: (networkId: number) => Promise<boolean>
-    status: () => { connected: boolean }
+}
+
+const findRpc = (networkId: number): string | undefined => {
+    console.log("#####", {chains})
+    const chain = chains.find(
+        (chain) => { 
+            return chain.chainId === networkId
+        }
+    )
+    console.log("#####", {chain})
+    return chain?.rpc?.find(
+        (rpc) => {
+            console.log("#####", {rpc}, !rpc.startsWith("ws") && !rpc.includes("INFURA_API_KEY"))
+            return !rpc.startsWith("ws") && !rpc.includes("INFURA_API_KEY")
+        }
+    )
+}
+
+export class SafeSigner {
+
+    private onboard?: API
+    private providerChangeListener?: (provider: any | null) => void
+
+    onProviderChange(listener?: (provider: any) => void) {
+        this.providerChangeListener = listener
+    }
+
+    async prepare(networkId: number, showSelection?: boolean): Promise<boolean> {
+        this.clear()
+        const wallets: WalletInitOptions[] = [
+            { walletName: "metamask" },
+        ]
+        const rpc = findRpc(networkId)
+        if (rpc) {
+            wallets.push(
+                {
+                    walletName: 'walletConnect',
+                    rpc: {
+                        [networkId.toString()]: rpc
+                    },
+                    bridge: 'https://safe-walletconnect.gnosis.io/',
+                }
+            )
+        }
+        const onboard = Onboard({
+            networkId,
+            subscriptions: {
+                wallet: wallet => {
+                    if (wallet.name) localStorage.setItem("last_selected_wallet_name", wallet.name)
+                    try {
+                        this.providerChangeListener?.(wallet.provider)
+                    } catch (e) {
+                        console.error(e)
+                    }
+                },
+                address: address => {
+                    console.log({ address })
+                }
+            },
+            walletSelect: {
+                description: 'Please select a Signer',
+                wallets
+            },
+            walletCheck: [
+                { checkName: 'derivationPath' },
+                { checkName: 'connect' },
+                { checkName: 'accounts' },
+                { checkName: 'network' }
+            ],
+        })
+        this.onboard = onboard
+        const lastSelectedWallet = localStorage.getItem("last_selected_wallet_name") || undefined
+        if (!lastSelectedWallet && showSelection != true) return false
+        if (await onboard.walletSelect(lastSelectedWallet))
+            return await onboard.walletCheck();
+        return false
+    }
+
+    async connect(networkId: number): Promise<boolean> {
+        return this.prepare(networkId, true)
+    }
+
+    async disconnect(): Promise<void> {
+        localStorage.removeItem("last_selected_wallet_name")
+        this.clear()
+    }
+
+    async clear() {
+        this.onboard?.walletReset()
+        this.onboard = undefined
+    }
+
+    status(): SignerInfo {
+        try {
+            const state = this.onboard?.getState()
+            console.log(state)
+            return {
+                signerAddress: state?.address
+            }
+        } catch (e) {
+            return {}
+        }
+    }
 }
 
 const AppSettingsContext = React.createContext<AppSettings | undefined>(undefined);
@@ -70,44 +176,16 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
         }
         return undefined
     }, [useCustomRpc, customRpc, connectedProvider])
-    const onboard = useMemo(() => {
-        return Onboard({
-            networkId: 1,
-            subscriptions: {
-                wallet: wallet => {
-                    setConnectedProvider(wallet.provider)
-                    console.log(wallet.provider)
-                }
-            }
-        });
+
+    const safeSigner = useMemo(() => {
+        return new SafeSigner();
     }, [])
-    const status = (): { connected: boolean } => {
-        try {
-            const state = onboard.getState()
-            console.log(state)
-            return {
-                connected: !!state.address
-            }
-        } catch (e) {
-            return {
-                connected: false
-            }
-        }
-    }
-    const connect = async (networkId: number): Promise<boolean> => {
-        onboard.config({ networkId })
-        if (await onboard.walletSelect())
-            return await onboard.walletCheck();
-        return false
-    }
-    const enable = async (): Promise<string[]> => {
-        if (window.ethereum) {
-            return window.ethereum.enable()
-        }
-        return []
-    }
-    console.log({ provider, connectedProvider })
-    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer: provider?.getSigner(), networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, enable, connect, status }}>
+
+    useEffect(() => {
+        safeSigner.onProviderChange(setConnectedProvider)
+    }, [setConnectedProvider])
+
+    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer: provider?.getSigner(), networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, safeSigner }}>
         {children}
     </AppSettingsContext.Provider>
 }

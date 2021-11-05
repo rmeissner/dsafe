@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import shortNames from './shotNameToChainId.json'
+import shortNames from './shortNameToChainId.json'
 
 export interface Account {
     id: string

@@ -9,12 +9,13 @@ const Root = styled('div')(({ theme }) => ({
 
 export const SignerInfo: React.FC = () => {
     const { chainId } = useAccount()
-    const { status, connect } = useAppSettings()
-    const { connected } = status()
-
+    const { signer, safeSigner } = useAppSettings()
     return <Root>
         <hr />
-        { connected ? "Connected" : <Button onClick={() => connect(chainId) }>Connect</Button> }
+        { !!signer ? 
+            <Button onClick={() => safeSigner.disconnect() }>Disconnect</Button>  : 
+            <Button onClick={() => safeSigner.connect(chainId) }>Connect</Button> 
+        }
     </Root>
 }
 

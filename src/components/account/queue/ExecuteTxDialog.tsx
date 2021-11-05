@@ -18,14 +18,14 @@ export interface Props {
 
 export const ExecuteTxDialog: React.FC<Props> = ({ transaction, open, handleClose, handleTxSubmitted }) => {
     const queuedRepo = useQueueRepo()
-    const { signer, enable } = useAppSettings()
+    const { signer, safeSigner } = useAppSettings()
 
     const handleExecution = async () => {
         // TODO: show error for signer
         if (!open || !transaction || !signer) return
         try {
-            const accounts = await enable()
-            if (accounts.length === 0) throw Error("No accounts available")
+            const { signerAddress } = await safeSigner.status()
+            if (!signerAddress) throw Error("No accounts available")
             const signatures = await queuedRepo.getSignatures(transaction.id)
             const ethereumTxHash = await queuedRepo.submitTx(transaction, signer, signatures)
             handleTxSubmitted?.(ethereumTxHash)

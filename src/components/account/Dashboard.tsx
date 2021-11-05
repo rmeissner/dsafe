@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { useParams } from 'react-router'
 import Transactions from './transaction/Transactions';
 import TransactionRepositoryProvider from '../provider/TransactionRepositoryProvider';
@@ -29,10 +29,18 @@ export const useAccount = () => {
 export const Dashboard: React.FC = () => {
     const { account } = useParams<Path>() //0x969c350577B6CD3A8E963cBB8D9c728B840c459e
     const isDesktop = useDektopLayout();
+    const { safeSigner } = useAppSettings()
     const value = parseAccount(account)
+
+    useEffect(() => {
+        if (!value) return
+        safeSigner.prepare(value.chainId)
+    }, [value?.chainId])
+
     if (!value) return (<>
         "Invalid account"
     </>)
+
     return <AccountContext.Provider value={value}>
         <TransactionRepositoryProvider>
             <QueueRepositoryProvider>

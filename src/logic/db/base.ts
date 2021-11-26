@@ -12,7 +12,6 @@ export abstract class AbstractDB {
     }
 
     async open(): Promise<IDBDatabase> {
-        console.log("open")
         if (this.internalDb) return this.internalDb
         const dbStore = this;
         return new Promise((callback, reject) => {
@@ -25,7 +24,6 @@ export abstract class AbstractDB {
                 callback(this.result);
             }
             request.onupgradeneeded = function (event) {
-                console.log("onupgradeneeded")
                 dbStore.migration(this.result, event.oldVersion, this.result.version)
             }
         })

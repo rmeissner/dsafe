@@ -13,8 +13,8 @@ export const SignerInfo: React.FC = () => {
     return <Root>
         <hr />
         { !!signer ? 
-            <Button onClick={() => safeSigner.disconnect() }>Disconnect</Button>  : 
-            <Button onClick={() => safeSigner.connect(chainId) }>Connect</Button> 
+            <Button onClick={() => safeSigner.disconnect() }>Disconnect Signer</Button>  : 
+            <Button onClick={() => safeSigner.connect(chainId) }>Connect Signer</Button> 
         }
     </Root>
 }

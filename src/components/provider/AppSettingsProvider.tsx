@@ -78,12 +78,10 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
             return new ethers.providers.JsonRpcProvider(customRpc);
         }
         if (connectedProvider) {
-            console.log("#####", {connectedProvider})
             return new ethers.providers.Web3Provider(connectedProvider)
         }
         const chainRpc = getChainRpc(networkId)
         if (chainRpc) {
-            console.log("#####", {chainRpc})
             return new ethers.providers.JsonRpcProvider(chainRpc);
         }
         return undefined

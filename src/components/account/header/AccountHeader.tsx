@@ -12,6 +12,7 @@ import { useQueueRepo } from "../../provider/QueueRepositoryProvider";
 import { Callback } from "safe-indexer-ts";
 import { QueueRepositoryUpdates } from "../../../logic/account/QueueRepository";
 import { useCopyAddress } from "../../utils/media";
+import SafeInfoDialog from "../info/SafeInfoDialog";
 
 const theme = {
     identicon: {
@@ -37,6 +38,7 @@ const StyledImg = styled('img')<{ size: ThemeIdenticonSize }>(({ theme: Theme, s
 
 export const AccountHeader: React.FC<{ expanded: boolean }> = ({ expanded }) => {
     const [showSettings, setShowSettings] = useState<boolean>(false)
+    const [showInfo, setShowInfo] = useState<boolean>(false)
     const [queueSize, setQueueSize] = useState<number>(0)
     const account = useAccount()
     const iconSrc = useMemo(() => makeBlockie(account.address), [account]);
@@ -85,7 +87,7 @@ export const AccountHeader: React.FC<{ expanded: boolean }> = ({ expanded }) => 
         textAlign: 'left',
         alignItems: 'center'
     }}>
-        <StyledImg src={iconSrc} size="md" />
+        <StyledImg src={iconSrc} size="md" onClick={() => setShowInfo(true)} />
         <Group sx={{ paddingX: '8px', textAlign: 'center' }} onClick={copyAddress} >
             <Typography sx={{ fontFamily: 'Monospace' }} >{shortAddress(account.address)}</Typography>
             Chain {account.chainId}
@@ -95,6 +97,7 @@ export const AccountHeader: React.FC<{ expanded: boolean }> = ({ expanded }) => 
         ) : queueSize.toString()
         }
         <SettingsDialog open={showSettings} handleClose={() => setShowSettings(false)} reindex={reindex} />
+        <SafeInfoDialog open={showInfo} handleClose={() => setShowInfo(false)} />
     </Row>
 }
 

@@ -24,6 +24,10 @@ export class SafeSigner {
         this.clear()
         const wallets: WalletInitOptions[] = [
             { walletName: "metamask" },
+            { walletName: "opera" },
+            { walletName: "status" },
+            { walletName: "frame" },
+            { walletName: "gnosis" },
         ]
         const rpc = this.rpcProvider?.(networkId)
         if (rpc) {

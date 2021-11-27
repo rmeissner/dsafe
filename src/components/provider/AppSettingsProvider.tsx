@@ -1,8 +1,7 @@
 import { ethers, providers, Signer } from "ethers";
 import { TypedDataSigner } from "@ethersproject/abstract-signer"
-import React, { useContext, useMemo, useState } from "react";
-
-declare let window: any;
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import { SafeSigner } from "../../logic/account/SafeSigner";
 
 export interface NetworkConfig {
     maxBlocks: number,
@@ -19,11 +18,11 @@ export interface AppSettings {
     readonly useCustomRpc: boolean,
     readonly provider: providers.JsonRpcProvider | undefined,
     readonly signer: Signer & TypedDataSigner | undefined,
+    readonly safeSigner: SafeSigner,
     readonly networkConfig: NetworkConfig,
     toggleCustomRpc: (value: boolean) => void
     updateCustomRpc: (value: string) => void
     updateNetworkConfig: (value: NetworkConfig) => void
-    enable: () => Promise<string[]>
 }
 
 const AppSettingsContext = React.createContext<AppSettings | undefined>(undefined);
@@ -37,6 +36,7 @@ export const useAppSettings = () => {
 export const AppSettingsProvider: React.FC = ({ children }) => {
     const [useCustomRpc, setUseCustomRpc] = useState(localStorage.getItem("app_state_use_rpc") === "true")
     const [customRpc, setCustomRpc] = useState(localStorage.getItem("app_state_rpc") || "")
+    const [connectedProvider, setConnectedProvider] = useState<any | null>(undefined)
     const storedConfig = localStorage.getItem("app_state_network_config")
     const [networkConfig, setNetworkConfig] = useState<NetworkConfig>(storedConfig ? JSON.parse(storedConfig) : defaultConfig)
     const toggleCustomRpc = (value: boolean) => {
@@ -58,20 +58,31 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
     const provider = useMemo(() => {
         if (useCustomRpc) {
             if (!customRpc) return undefined
-            return new ethers.providers.JsonRpcProvider(customRpc); // "https://bsc-dataseed1.ninicoin.io" 
+            return new ethers.providers.JsonRpcProvider(customRpc); 
         }
-        if (window.ethereum) {
-            return new ethers.providers.Web3Provider(window.ethereum)
+        if (connectedProvider) {
+            return new ethers.providers.Web3Provider(connectedProvider)
         }
         return undefined
-    }, [useCustomRpc, customRpc])
-    const enable = async (): Promise<string[]> => {
-        if (window.ethereum) {
-            return window.ethereum.enable()
+    }, [useCustomRpc, customRpc, connectedProvider])
+
+    const signer = useMemo(() => {
+        let signerProvider = provider
+        if (useCustomRpc && connectedProvider) {
+            signerProvider = new ethers.providers.Web3Provider(connectedProvider)
         }
-        return []
-    }
-    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer: provider?.getSigner(), networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, enable }}>
+        return signerProvider?.getSigner()
+    }, [provider])
+
+    const safeSigner = useMemo(() => {
+        return new SafeSigner();
+    }, [])
+
+    useEffect(() => {
+        safeSigner.onProviderChange(setConnectedProvider)
+    }, [safeSigner, setConnectedProvider])
+
+    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer, networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, safeSigner }}>
         {children}
     </AppSettingsContext.Provider>
 }

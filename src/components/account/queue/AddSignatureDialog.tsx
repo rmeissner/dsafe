@@ -16,7 +16,6 @@ export interface Props {
 }
 
 export const AddSignatureDialog: React.FC<Props> = ({ safeTxHash, open, handleClose, handleNewSignature }) => {
-    const [signerString, setSignerString] = useState("")
     const [signatureString, setSignatureString] = useState("")
     const queuedRepo = useQueueRepo()
 
@@ -27,7 +26,6 @@ export const AddSignatureDialog: React.FC<Props> = ({ safeTxHash, open, handleCl
             await queuedRepo.addSignature(signature)
             handleNewSignature?.()
             handleClose()
-            setSignerString("")
             setSignatureString("")
         } catch (e) {
             console.error(e)
@@ -38,7 +36,6 @@ export const AddSignatureDialog: React.FC<Props> = ({ safeTxHash, open, handleCl
         <DialogTitle>Add Signature</DialogTitle>
         <DialogContent>
             <TextField label="Signature" onChange={(e) => setSignatureString(e.target.value)} value={signatureString} fullWidth /><br />
-            <TextField label="Signer (optional)" onChange={(e) => setSignerString(e.target.value)} value={signerString} fullWidth /><br />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>

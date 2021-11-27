@@ -52,7 +52,6 @@ export class TransactionRepository implements Callback {
 
     private checkForCreation(interactions: SafeInteraction[]) {
         for (const interaction of interactions) {
-            console.log(interaction)
             if (interaction.type === "setup" || (
                 interaction.type === "multisig_transaction" && interaction.details?.nonce === 0
             )) {
@@ -80,7 +79,7 @@ export class TransactionRepository implements Callback {
             try {
                 callback.onNewInteractions(interactions)
             } catch (e) {
-                console.log(e)
+                console.error(e)
             }
         })
     }
@@ -101,7 +100,7 @@ export class TransactionRepository implements Callback {
         try {
             callback.onStatusUpdate?.(currentStatus)
         } catch (e) {
-            console.log(e)
+            console.error(e)
         }
     }
 

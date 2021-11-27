@@ -21,14 +21,13 @@ export interface Props {
 export const SignTransactionDialog: React.FC<Props> = ({ transaction, open, handleClose, handleNewSignature }) => {
     const queuedRepo = useQueueRepo()
     const account = useAccount()
-    const { signer, enable } = useAppSettings()
+    const { signer, safeSigner } = useAppSettings()
 
     const handleSign = async () => {
-        // TODO: show error for signer
         if (!open || !transaction || !signer) return
         try {
-            const accounts = await enable()
-            if (accounts.length === 0) throw Error("No accounts available")
+            const { signerAddress } = await safeSigner.status()
+            if (!signerAddress) throw Error("No accounts available")
             const signature = await signQueuedTx(signer, account, transaction)
             await queuedRepo.addSignature(signature)
             handleNewSignature?.()

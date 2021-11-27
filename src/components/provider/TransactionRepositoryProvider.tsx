@@ -20,6 +20,7 @@ export const TransactionRepositoryProvider: React.FC = ({ children }) => {
         return new TransactionRepository(account, networkConfig)
     }, [ account, networkConfig ])
 
+    console.log({provider})
     useEffect(() => {
         if (!provider) return
         return repo.connect(provider)

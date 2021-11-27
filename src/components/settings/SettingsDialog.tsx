@@ -12,7 +12,12 @@ export interface Props {
 }
 
 export const SettingsDialog: React.FC<Props> = ({ open, reindex, handleClose }) => {
-    const { useCustomRpc, toggleCustomRpc, customRpc, updateCustomRpc, networkConfig, updateNetworkConfig } = useAppSettings()
+    const {
+        useCustomRpc, toggleCustomRpc,
+        customRpc, updateCustomRpc,
+        networkConfig, updateNetworkConfig,
+        infuraToken, updateInfuraToken
+    } = useAppSettings()
     const [status, setStatus] = useState<string>("")
     const txRepo = useTransactionRepo()
 
@@ -74,6 +79,7 @@ export const SettingsDialog: React.FC<Props> = ({ open, reindex, handleClose }) 
                     Use custom prc endpoint <Switch checked={useCustomRpc} onChange={(_, checked) => toggleCustomRpc(checked)} /><br />
                 </Row>
                 <TextField label="RPC" onChange={(e) => updateCustomRpc(e.target.value)} value={customRpc} fullWidth /><br />
+                <TextField label="Infura Token" onChange={(e) => updateInfuraToken(e.target.value)} value={infuraToken} fullWidth /><br />
                 <TextField label="Intital block" onChange={(e) => updateStartingBlock(e.target.value)} value={networkConfig.startingBlock} fullWidth /><br />
                 <TextField label="Max blocks" onChange={(e) => updateMaxBlocks(e.target.value)} value={networkConfig.maxBlocks} fullWidth /><br />
                 {

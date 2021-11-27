@@ -14,11 +14,12 @@ export const useQueueRepo = () => {
 
 export const QueueRepositoryProvider: React.FC = ({ children }) => {
     const account = useAccount()
-    const { provider } = useAppSettings()
+    const { loadProvider } = useAppSettings()
 
     const repo = useMemo(() => {
+        const provider = loadProvider(account.chainId)
         return new QueueRepository(account, provider)
-    }, [ account, provider ])
+    }, [ account, loadProvider ])
 
     return <QueueRepoContext.Provider value={repo}>
         { children }

@@ -1,7 +1,8 @@
 import { ethers, providers, Signer } from "ethers";
 import { TypedDataSigner } from "@ethersproject/abstract-signer"
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { SafeSigner } from "../../logic/account/SafeSigner";
+import { findChainRpc } from "../../logic/utils/chainInfo";
 
 export interface NetworkConfig {
     maxBlocks: number,
@@ -14,14 +15,16 @@ const defaultConfig: NetworkConfig = {
 }
 
 export interface AppSettings {
+    readonly infuraToken: string,
     readonly customRpc: string,
     readonly useCustomRpc: boolean,
-    readonly provider: providers.JsonRpcProvider | undefined,
     readonly signer: Signer & TypedDataSigner | undefined,
     readonly safeSigner: SafeSigner,
     readonly networkConfig: NetworkConfig,
+    loadProvider: (networkId: number) => providers.JsonRpcProvider | undefined,
     toggleCustomRpc: (value: boolean) => void
     updateCustomRpc: (value: string) => void
+    updateInfuraToken: (value: string) => void
     updateNetworkConfig: (value: NetworkConfig) => void
 }
 
@@ -36,6 +39,7 @@ export const useAppSettings = () => {
 export const AppSettingsProvider: React.FC = ({ children }) => {
     const [useCustomRpc, setUseCustomRpc] = useState(localStorage.getItem("app_state_use_rpc") === "true")
     const [customRpc, setCustomRpc] = useState(localStorage.getItem("app_state_rpc") || "")
+    const [infuraToken, setInfuraToken] = useState(localStorage.getItem("app_state_infura_token") || "")
     const [connectedProvider, setConnectedProvider] = useState<any | null>(undefined)
     const storedConfig = localStorage.getItem("app_state_network_config")
     const [networkConfig, setNetworkConfig] = useState<NetworkConfig>(storedConfig ? JSON.parse(storedConfig) : defaultConfig)
@@ -47,6 +51,10 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
         localStorage.setItem("app_state_rpc", value)
         setCustomRpc(value)
     }
+    const updateInfuraToken = (value: string) => {
+        localStorage.setItem("app_state_infura_token", value)
+        setInfuraToken(value)
+    }
     const updateNetworkConfig = (value: NetworkConfig) => {
         const serialized = JSON.stringify({
             maxBlocks: value.maxBlocks || 100,
@@ -55,34 +63,57 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
         localStorage.setItem("app_state_network_config", serialized)
         setNetworkConfig(value)
     }
-    const provider = useMemo(() => {
+
+    const getChainRpc = useCallback((networkId: number): string | undefined => {
+        if (infuraToken) {
+            const rpcUrl = findChainRpc(networkId, true)
+            return rpcUrl?.replaceAll("${INFURA_API_KEY}", infuraToken);
+        }
+        return findChainRpc(networkId, false)
+    }, [infuraToken])
+
+    const loadProvider = useCallback((networkId: number): providers.JsonRpcProvider | undefined => {
         if (useCustomRpc) {
             if (!customRpc) return undefined
-            return new ethers.providers.JsonRpcProvider(customRpc); 
+            return new ethers.providers.JsonRpcProvider(customRpc);
         }
         if (connectedProvider) {
+            console.log("#####", {connectedProvider})
             return new ethers.providers.Web3Provider(connectedProvider)
         }
+        const chainRpc = getChainRpc(networkId)
+        if (chainRpc) {
+            console.log("#####", {chainRpc})
+            return new ethers.providers.JsonRpcProvider(chainRpc);
+        }
         return undefined
-    }, [useCustomRpc, customRpc, connectedProvider])
+    }, [getChainRpc, useCustomRpc, connectedProvider])
 
     const signer = useMemo(() => {
-        let signerProvider = provider
-        if (useCustomRpc && connectedProvider) {
-            signerProvider = new ethers.providers.Web3Provider(connectedProvider)
+        if (connectedProvider) {
+            return new ethers.providers.Web3Provider(connectedProvider).getSigner()
         }
-        return signerProvider?.getSigner()
-    }, [provider])
+        return undefined;
+    }, [connectedProvider])
 
+    // TODO refactor all safeSigner hooks into separate file
     const safeSigner = useMemo(() => {
         return new SafeSigner();
     }, [])
 
     useEffect(() => {
+        safeSigner.setRpcProvider(getChainRpc)
+    }, [safeSigner, getChainRpc])
+
+    useEffect(() => {
         safeSigner.onProviderChange(setConnectedProvider)
     }, [safeSigner, setConnectedProvider])
 
-    return <AppSettingsContext.Provider value={{ customRpc, useCustomRpc, provider, signer, networkConfig, toggleCustomRpc, updateCustomRpc, updateNetworkConfig, safeSigner }}>
+    return <AppSettingsContext.Provider value={{
+        customRpc, useCustomRpc, infuraToken, signer, networkConfig,
+        loadProvider, toggleCustomRpc, updateCustomRpc, updateInfuraToken, updateNetworkConfig,
+        safeSigner
+    }}>
         {children}
     </AppSettingsContext.Provider>
 }

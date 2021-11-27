@@ -1,31 +1,23 @@
 import Onboard from 'bnc-onboard'
 import { API, WalletInitOptions } from "bnc-onboard/dist/src/interfaces";
-import chains from '../../logic/utils/chains.json'
+import { findChainRpc } from '../utils/chainInfo';
 
 export interface SignerInfo {
     signerAddress?: string
 }
 
-const findRpc = (networkId: number): string | undefined => {
-    const chain = chains.find(
-        (chain) => { 
-            return chain.chainId === networkId
-        }
-    )
-    return chain?.rpc?.find(
-        (rpc) => {
-            return !rpc.startsWith("ws") && !rpc.includes("INFURA_API_KEY")
-        }
-    )
-}
-
 export class SafeSigner {
 
     private onboard?: API
+    private rpcProvider?: (networkId: number) => string | undefined
     private providerChangeListener?: (provider: any | null) => void
 
     onProviderChange(listener?: (provider: any) => void) {
         this.providerChangeListener = listener
+    }
+
+    setRpcProvider(rpcProvider: ((networkId: number) => string | undefined) | undefined) {
+        this.rpcProvider = rpcProvider
     }
 
     async prepare(networkId: number, showSelection?: boolean): Promise<boolean> {
@@ -33,7 +25,7 @@ export class SafeSigner {
         const wallets: WalletInitOptions[] = [
             { walletName: "metamask" },
         ]
-        const rpc = findRpc(networkId)
+        const rpc = this.rpcProvider?.(networkId)
         if (rpc) {
             wallets.push(
                 {

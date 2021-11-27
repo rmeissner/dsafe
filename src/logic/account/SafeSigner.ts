@@ -42,15 +42,6 @@ export class SafeSigner {
                         [networkId.toString()]: rpc
                     },
                     bridge: 'https://safe-walletconnect.gnosis.io/',
-                }
-            )
-            wallets.push(
-                {
-                    walletName: 'walletConnect',
-                    rpc: {
-                        [networkId.toString()]: rpc
-                    },
-                    bridge: 'https://safe-walletconnect.gnosis.io/',
                 },
                 {
                   walletName: 'ledger',

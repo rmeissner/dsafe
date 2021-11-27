@@ -8,6 +8,7 @@ import { buildTx } from '../../../logic/utils/proposing'
 import { useQueueRepo } from '../../provider/QueueRepositoryProvider'
 import { useDektopLayout } from '../../utils/media'
 import { useAccount } from '../Dashboard'
+import ExecutorWindow from '../executors/ExecutorWindow'
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -90,6 +91,12 @@ export const ProposeTxs: React.FC<Props> = ({ open, handleClose, onConfirm, onRe
             <TextField label="Data" onChange={(e) => setDataString(e.target.value)} value={dataString} fullWidth /><br />
             <TextField label="Operation" onChange={(e) => setOperationString(e.target.value)} value={operationString} fullWidth /><br />
             <TextField label="Nonce" onChange={(e) => setNonceString(e.target.value)} value={nonceString} fullWidth /><br />
+            <ExecutorWindow tx={{
+                to: toString,
+                value: valueString,
+                data: dataString,
+                operation: 0
+            }}/>
         </DialogContent>
         <DialogActions>
           <Button onClick={cancelCreation}>Cancel</Button>

@@ -105,7 +105,6 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
             try {
                 let link = "https://dashboard.tenderly.co/simulator/new?"
                 link += "network=" + account.chainId + "&"
-                console.log(populatedTx)
                 if (populatedTx) {
                     link += "from=" + populatedTx.from + "&"
                     link += "contractAddress=" + populatedTx.to + "&"

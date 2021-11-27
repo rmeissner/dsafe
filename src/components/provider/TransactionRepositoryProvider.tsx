@@ -14,17 +14,17 @@ export const useTransactionRepo = () => {
 
 export const TransactionRepositoryProvider: React.FC = ({ children }) => {
     const account = useAccount()
-    const { provider, networkConfig } = useAppSettings()
+    const { loadProvider, networkConfig } = useAppSettings()
 
     const repo = useMemo(() => {
         return new TransactionRepository(account, networkConfig)
     }, [ account, networkConfig ])
 
-    console.log({provider})
     useEffect(() => {
+        const provider = loadProvider(account.chainId)
         if (!provider) return
         return repo.connect(provider)
-    }, [repo, provider])
+    }, [repo, loadProvider])
 
     useEffect(() => {
         return () => repo.disconnect()

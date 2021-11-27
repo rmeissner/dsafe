@@ -27,7 +27,7 @@ export interface Props {
 
 const AppWindow: React.FC<Props> = ({ appUrl }) =>  {
   const account = useAccount()
-  const { provider } = useAppSettings()
+  const { loadProvider } = useAppSettings()
   const [loading, setLoading] = useState<boolean>(false)
   const [proposalParams, setProposalParams] = useState<ProposalParams | undefined>(undefined)
   const appFrame = useRef<HTMLIFrameElement>(null)
@@ -44,8 +44,8 @@ const AppWindow: React.FC<Props> = ({ appUrl }) =>  {
   }, [account, appFrame, appUrl, setProposalParams])
 
   useEffect(() => {
-    communicator.provider = provider
-  }, [communicator, provider])
+    communicator.provider = loadProvider(account.chainId)
+  }, [communicator, account, loadProvider])
 
   const handleTransactionConfirmation = useCallback(async (tx: QueuedSafeTransaction, requestId?: string) => {
     console.log("handleTransactionConfirmation", tx, requestId)

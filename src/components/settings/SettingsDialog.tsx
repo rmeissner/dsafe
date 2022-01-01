@@ -15,6 +15,7 @@ export const SettingsDialog: React.FC<Props> = ({ open, reindex, handleClose }) 
     const {
         useCustomRpc, toggleCustomRpc,
         customRpc, updateCustomRpc,
+        relayService, updateRelayService,
         networkConfig, updateNetworkConfig,
         infuraToken, updateInfuraToken
     } = useAppSettings()
@@ -78,6 +79,7 @@ export const SettingsDialog: React.FC<Props> = ({ open, reindex, handleClose }) 
                 <Row sx={{ alignItems: 'center' }}>
                     Use custom prc endpoint <Switch checked={useCustomRpc} onChange={(_, checked) => toggleCustomRpc(checked)} /><br />
                 </Row>
+                <TextField label="Relay" onChange={(e) => updateRelayService(e.target.value)} value={relayService} fullWidth /><br />
                 <TextField label="RPC" onChange={(e) => updateCustomRpc(e.target.value)} value={customRpc} fullWidth /><br />
                 <TextField label="Infura Token" onChange={(e) => updateInfuraToken(e.target.value)} value={infuraToken} fullWidth /><br />
                 <TextField label="Intital block" onChange={(e) => updateStartingBlock(e.target.value)} value={networkConfig.startingBlock} fullWidth /><br />

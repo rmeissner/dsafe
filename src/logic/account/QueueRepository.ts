@@ -1,6 +1,7 @@
 import { providers, Signer, BigNumber } from "ethers";
+import { PopulatedTransaction } from "@ethersproject/contracts";
 import { QueuedInteractionsDAO, QueuedSafeTransaction, TxSignaturesDAO } from "../db/interactions";
-import { SafeTransaction, SafeTransactionSignature } from "../models/transactions";
+import { SafeTransaction, SafeTransactionSignature, SignedSafeTransaction } from "../models/transactions";
 import { Account } from "../utils/account";
 import { buildSignatureBytes, prepareSignatures } from "../utils/execution";
 import { Safe } from "../utils/safe";
@@ -83,17 +84,26 @@ export class QueueRepository {
         await this.signaturesDao.add(signature)
     }
 
-    async submitTx(tx: QueuedSafeTransaction, submitter: Signer, signatures: SafeTransactionSignature[]): Promise<string> {
-        const writableSafe = this.safe.writable(submitter)
+    async signedTx(tx: QueuedSafeTransaction, signatures: SafeTransactionSignature[], submitterAddress?: string): Promise<SignedSafeTransaction> {
         const status = await this.safe.status()
         if (status.nonce.toNumber() !== tx.nonce) throw Error(`Unexpected nonce! Expected ${status.nonce} got ${tx.nonce}`)
-        const submitterAddress = await submitter.getAddress()
         const signatureBytes = buildSignatureBytes(await prepareSignatures(status, tx, signatures, submitterAddress))
-        const signedTx = {
+        return {
             signatures: signatureBytes,
             ...tx
         }
+    }
+
+    async submitTx(tx: QueuedSafeTransaction, submitter: Signer, signatures: SafeTransactionSignature[]): Promise<string> {
+        const writableSafe = this.safe.writable(submitter)
+        const submitterAddress = await submitter.getAddress()
+        const signedTx = await this.signedTx(tx, signatures, submitterAddress)
         return writableSafe.executeTx(signedTx)
+    }
+
+    async populateTx(tx: QueuedSafeTransaction, signatures: SafeTransactionSignature[]): Promise<PopulatedTransaction> {
+        const signedTx = await this.signedTx(tx, signatures)
+        return await this.safe.populateTx(signedTx)
     }
 
 }

@@ -13,6 +13,7 @@ import { Typography } from '@mui/material';
 import AccountHeader from './header/AccountHeader';
 import { useAppSettings } from '../provider/AppSettingsProvider';
 import SignerInfo from './signer/SignerInfo';
+import RelayRepositoryProvider from '../provider/RelayRepositoryProvider';
 
 interface Path {
     account: string
@@ -44,14 +45,16 @@ export const Dashboard: React.FC = () => {
     return <AccountContext.Provider value={value}>
         <TransactionRepositoryProvider>
             <QueueRepositoryProvider>
-                <Row>
-                    <ResponsiveSidebar isDesktop={isDesktop} header={(expanded) => <AccountHeader expanded={expanded} />}>
-                        <SignerInfo />
-                        <Queue />
-                        <Transactions />
-                    </ResponsiveSidebar>
-                    <Apps />
-                </Row>
+                <RelayRepositoryProvider>
+                    <Row>
+                        <ResponsiveSidebar isDesktop={isDesktop} header={(expanded) => <AccountHeader expanded={expanded} />}>
+                            <SignerInfo />
+                            <Queue />
+                            <Transactions />
+                        </ResponsiveSidebar>
+                        <Apps />
+                    </Row>
+                </RelayRepositoryProvider>
             </QueueRepositoryProvider>
         </TransactionRepositoryProvider>
     </AccountContext.Provider>

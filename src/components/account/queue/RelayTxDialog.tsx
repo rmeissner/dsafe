@@ -28,12 +28,10 @@ export const RelayTxDialog: React.FC<Props> = ({ transaction, open, handleClose,
         try {
             const signatures = await queuedRepo.getSignatures(transaction.id)
             const { to, data } = await queuedRepo.populateTx(transaction, signatures)
-            if (!to) throw Error("Missing `to`")
+            if (!to || to != account.address) throw Error("Missing/ invalid `to`")
             if (!data) throw Error("Missing `data`")
 
-            const chainId = account.chainId
-
-            const relayId = await relayRepo.relayTransaction(chainId, to, data)
+            const relayId = await relayRepo.relayTransaction(account, data)
             
             handleTxSubmitted?.(relayId)
             handleClose()

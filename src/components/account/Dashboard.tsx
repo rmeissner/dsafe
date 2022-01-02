@@ -28,7 +28,7 @@ export const useAccount = () => {
 }
 
 export const Dashboard: React.FC = () => {
-    const { account } = useParams<Path>() //0x969c350577B6CD3A8E963cBB8D9c728B840c459e
+    const { account } = useParams<Path>()
     const isDesktop = useDektopLayout();
     const { safeSigner } = useAppSettings()
     const value = parseAccount(account)

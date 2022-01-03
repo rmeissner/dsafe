@@ -99,7 +99,7 @@ export const parseSignatureType = (signature: string): SafeSignatureType => {
     }
 }
 
-const getEIP712Domain = (version: string, account: Account): TypedDataDomain => {
+export const getEIP712Domain = (version: string, account: Account): TypedDataDomain => {
     switch (version) {
         case "1.3.0": {
             return {
@@ -113,7 +113,7 @@ const getEIP712Domain = (version: string, account: Account): TypedDataDomain => 
     }
 }
 
-const getEIP712TxType = (version: string): Record<string, TypedDataField[]> => {
+export const getEIP712TxType = (version: string): Record<string, TypedDataField[]> => {
     switch (version) {
         case "0.1.0": {
             return {

@@ -19,6 +19,10 @@ export interface StoredAccount extends Account {
 export interface AccountInitializer extends Account {
     initializerTo: string
     initializerData: string
+    signers: string[]
+    threshold: number
+    salt: string
+    version: string
 }
 
 export interface StoredAppUrls {

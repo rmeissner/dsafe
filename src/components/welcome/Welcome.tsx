@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useHistory } from 'react-router';
 import { AccountsDAO, StoredAccount } from '../../logic/db/app';
 import { parseAccount } from '../../logic/utils/account';
-import { Entry, Group, LongText, Row } from '../../styled/tables';
+import { Entry, LongText } from '../../styled/tables';
 
 const Root = styled('div')(({ theme }) => ({
     textAlign: "center",

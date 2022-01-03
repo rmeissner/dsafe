@@ -1,7 +1,8 @@
-import { ethers, PopulatedTransaction } from 'ethers';
+import { ethers, PopulatedTransaction, Signer } from 'ethers';
 import { getFallbackHandlerDeployment, getProxyFactoryDeployment, getSafeL2SingletonDeployment, getSafeSingletonDeployment } from "@gnosis.pm/safe-deployments"
 import { AccountInitializerDAO } from '../db/app';
 import { Account, buildCaip2Addr, parseAccount } from '../utils/account';
+import { CounterfactualSafe, DeployedSafe, Safe } from '../utils/safe';
 
 const moduleAddresses: Record<string, string> = {
     "4": "0x5f5f79566FA22FAe06F9B8D63e667B2efdF01d35"
@@ -11,7 +12,7 @@ export class FactoryRepository {
 
     db: AccountInitializerDAO
 
-    constructor(readonly provider: ethers.providers.Provider) {
+    constructor() {
         this.db = new AccountInitializerDAO()
     }
 
@@ -32,7 +33,7 @@ export class FactoryRepository {
         }
     }
 
-    async createInitData(chainId: string, signers: string[], threshold: number, nonce: number, relaySupport?: boolean, l2?: boolean): Promise<{ proxyAddress: string, deploymentTx: PopulatedTransaction }> {
+    async createInitData(provider: ethers.providers.Provider, chainId: string, signers: string[], threshold: number, nonce: number, relaySupport?: boolean, l2?: boolean): Promise<{ proxyAddress: string, deploymentTx: PopulatedTransaction }> {
         // If not provide use L2 if not on Ethereum Mainnet
         const useL2 = l2 ?? chainId !== "1"
         const singletonDeployment = useL2 ? getSafeL2SingletonDeployment({ network: chainId }) : getSafeSingletonDeployment({ network: chainId })
@@ -55,7 +56,7 @@ export class FactoryRepository {
         )).data
         if (!setupData) throw Error("Could not generate setup data")
 
-        const factoryContract = new ethers.Contract(proxyFactoryAddress, proxyFactoryDeployment.abi, this.provider)
+        const factoryContract = new ethers.Contract(proxyFactoryAddress, proxyFactoryDeployment.abi, provider)
 
         const deploymentTx = await factoryContract.populateTransaction.createProxyWithNonce(
             singletonAddress, setupData, nonce
@@ -69,16 +70,29 @@ export class FactoryRepository {
         }
     }
 
-    async newAccount(chainId: number, signers: string[], threshold: number, nonce: number, relaySupport?: boolean, l2?: boolean): Promise<Account> {
-        const initializer = await this.createInitData(chainId.toString(), signers, threshold, nonce, relaySupport, l2)
+    async newAccount(provider: ethers.providers.Provider, chainId: number, signers: string[], threshold: number, nonce: number, relaySupport?: boolean, l2?: boolean): Promise<Account> {
+        const initializer = await this.createInitData(provider, chainId.toString(), signers, threshold, nonce, relaySupport, l2)
         const caip2 = buildCaip2Addr(chainId, initializer.proxyAddress)
         const account = parseAccount(caip2)
         if (!account) throw Error("Could not create account")
         await this.db.add({
             ...account,
+            signers,
+            threshold,
+            salt: nonce.toString(),
+            version: "1.3.0",
             initializerTo: initializer.deploymentTx.to!!,
             initializerData: initializer.deploymentTx.data!!
         })
         return account
+    }
+
+    async getSafeForAccount(account: Account, providerOrSigner?: ethers.providers.Provider | Signer): Promise<Safe> {
+        try {
+            const initData = await this.db.get(account.id)
+            return new CounterfactualSafe(initData)
+        } catch {
+            return new DeployedSafe(account.address, providerOrSigner)
+        }
     }
 }

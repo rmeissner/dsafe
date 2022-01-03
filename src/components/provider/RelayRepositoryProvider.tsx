@@ -1,6 +1,5 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { RelayRepository } from "../../logic/execution/RelayRepository";
-import { useAccount } from "../account/Dashboard";
 import { useAppSettings } from "./AppSettingsProvider";
 
 

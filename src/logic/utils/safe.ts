@@ -2,7 +2,7 @@ import { Contract, PopulatedTransaction } from "@ethersproject/contracts";
 import { safeInterface, SignedSafeTransaction } from "safe-indexer-ts";
 import { ethers, BigNumber, Signer } from "ethers";
 import { SafeTransaction } from "../models/transactions";
-import { AccountInitializer } from "../db/app";
+import { AccountInitializer, AccountInitializerDAO } from "../db/app";
 import { _TypedDataEncoder } from "ethers/lib/utils";
 import { getEIP712Domain, getEIP712TxType } from "./signatures";
 
@@ -24,9 +24,11 @@ export interface Safe {
 
 export interface WritableSafe extends Safe {
     executeTx(tx: SignedSafeTransaction): Promise<string>
+    initialize(): Promise<string|void>
 }
 
 export class CounterfactualSafe implements Safe {
+    // TODO: Add fallback to deployed Safe
     protected readonly safeContract: Contract
 
     constructor(readonly initializer: AccountInitializer) {
@@ -51,7 +53,7 @@ export class CounterfactualSafe implements Safe {
     }
 
     async getTransactionHash(tx: SafeTransaction): Promise<{ hash: string, version: string }> {
-        const hash = _TypedDataEncoder.encode(
+        const hash = _TypedDataEncoder.hash(
             getEIP712Domain(this.initializer.version, this.initializer),
             getEIP712TxType(this.initializer.version),
             tx
@@ -78,14 +80,14 @@ export class CounterfactualSafe implements Safe {
     }
 
     writable(signer: Signer): WritableSafe {
-        return new WritableDeployedSafe(this.safeContract.address, signer)
+        return new WritableDeployedSafe(this.safeContract.address, signer, this.initializer)
     }
 }
 
 export class DeployedSafe implements Safe {
     protected readonly safeContract: Contract
 
-    constructor(address: string, providerOrSigner?: ethers.providers.Provider | Signer) {
+    constructor(readonly address: string, providerOrSigner?: ethers.providers.Provider | Signer) {
         this.safeContract = new Contract(address, safeInterface, providerOrSigner)
     }
 
@@ -150,8 +152,18 @@ export class DeployedSafe implements Safe {
 }
 
 export class WritableDeployedSafe extends DeployedSafe implements WritableSafe {
-    constructor(address: string, signer: Signer) {
+    constructor(address: string, readonly signer: Signer, readonly initializer?: AccountInitializer) {
         super(address, signer)
+    }
+
+    async initialize(): Promise<string|void> {
+        if (!this.initializer) return
+        if (await this.signer.provider?.getCode(this.address) !== "0x") return
+        const { hash } = await this.signer.sendTransaction({
+            to: this.initializer.initializerTo,
+            data: this.initializer.initializerData
+        })
+        return hash
     }
 
     executeTx(tx: SignedSafeTransaction): Promise<string> {

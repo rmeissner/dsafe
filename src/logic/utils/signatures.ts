@@ -210,6 +210,7 @@ export const signQueuedTx = async (signer: Signer & TypedDataSigner, account: Ac
             console.warn("User canceled signing")
             throw e
         }
+        console.error(e)
         console.warn("Could not sign with EIP-712")
     }
     return await signMessage(signer, transaction) 

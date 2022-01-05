@@ -5,6 +5,7 @@ import { useHistory } from 'react-router';
 import { AccountsDAO, StoredAccount } from '../../logic/db/app';
 import { parseAccount } from '../../logic/utils/account';
 import { Entry, LongText } from '../../styled/tables';
+import CreateAccountDialog from '../create/CreateAccountDialog';
 
 const Root = styled('div')(({ theme }) => ({
     textAlign: "center",
@@ -12,6 +13,7 @@ const Root = styled('div')(({ theme }) => ({
 }))
 
 export const Welcome: React.FC = () => {
+    const [showCreateAccountDialog, setShowCreateAccountDialog] = useState(false)
     const [addressInput, setAddressInput] = useState("")
     const [addressError, setAddressError] = useState("")
     const [accountHistory, setAccountHistory] = useState<StoredAccount[]>([])
@@ -46,6 +48,7 @@ export const Welcome: React.FC = () => {
         Welcome!<br /><br />
         <TextField label="Account address" onChange={(e) => handleAddressInput(e.target.value)} value={addressInput} error={!!addressError} helperText={addressError} fullWidth /><br />
         <Button onClick={() => openAccount(addressInput)}>Open</Button>
+        <Button onClick={() => setShowCreateAccountDialog(true)}>Create</Button>
         {accountHistory.map((account) => {
             return (
                 <Entry onClick={() => openAccount(account.id)}>
@@ -53,6 +56,7 @@ export const Welcome: React.FC = () => {
                 </Entry>
             )
         })}
+        <CreateAccountDialog open={showCreateAccountDialog} handleClose={() => setShowCreateAccountDialog(false)}/>
     </Root>
 }
 

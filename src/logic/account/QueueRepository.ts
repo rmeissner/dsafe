@@ -98,6 +98,7 @@ export class QueueRepository {
     async submitTx(tx: QueuedSafeTransaction, submitter: Signer, signatures: SafeTransactionSignature[]): Promise<string> {
         const safe = await this.factoryRepo.getSafeForAccount(this.account, this.provider)
         const writableSafe = safe.writable(submitter)
+        await writableSafe.initialize()
         const submitterAddress = await submitter.getAddress()
         const signedTx = await this.signedTx(tx, signatures, submitterAddress)
         return writableSafe.executeTx(signedTx)

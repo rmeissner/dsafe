@@ -1,6 +1,5 @@
 import React, { useContext, useMemo } from "react";
 import { FactoryRepository } from "../../logic/execution/FactoryRepository";
-import { useAppSettings } from "./AppSettingsProvider";
 
 
 const FactoryRepoContext = React.createContext<FactoryRepository | undefined>(undefined);

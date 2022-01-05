@@ -4,8 +4,11 @@ import { AccountInitializerDAO } from '../db/app';
 import { Account, buildCaip2Addr, parseAccount } from '../utils/account';
 import { CounterfactualSafe, DeployedSafe, Safe } from '../utils/safe';
 
-const moduleAddresses: Record<string, string> = {
-    "4": "0x5f5f79566FA22FAe06F9B8D63e667B2efdF01d35"
+const relayProtocol: Record<string, {module: string, lib: string}> = {
+    "4": {
+        module: "0xBF44ecCd8725106b102d754B52c8fBd555D86652",
+        lib: "0x75F078CF81E5fE33b11947f7C5F7271F8f2008Ce"
+    }
 }
 
 export class FactoryRepository {
@@ -23,13 +26,13 @@ export class FactoryRepository {
     }
 
     createSetupInitData(safeContract: ethers.Contract, chainId: string, relaySupport: boolean) {
-        if (!relaySupport || !moduleAddresses[chainId]) return {
+        if (!relaySupport || !relayProtocol[chainId]) return {
             to: ethers.constants.AddressZero,
             data: "0x"
         }
         return {
-            to: safeContract.address,
-            data: safeContract.interface.encodeFunctionData("enabledModule", [moduleAddresses[chainId]])
+            to: relayProtocol[chainId].lib,
+            data: safeContract.interface.encodeFunctionData("enableModule", [relayProtocol[chainId].module])
         }
     }
 
@@ -58,10 +61,10 @@ export class FactoryRepository {
 
         const factoryContract = new ethers.Contract(proxyFactoryAddress, proxyFactoryDeployment.abi, provider)
 
-        const deploymentTx = await factoryContract.populateTransaction.createProxyWithNonce(
+        const proxyAddress = await factoryContract.callStatic.createProxyWithNonce(
             singletonAddress, setupData, nonce
         )
-        const proxyAddress = await factoryContract.callStatic.createProxyWithNonce(
+        const deploymentTx = await factoryContract.populateTransaction.createProxyWithNonce(
             singletonAddress, setupData, nonce
         )
         return {
@@ -75,7 +78,7 @@ export class FactoryRepository {
         const caip2 = buildCaip2Addr(chainId, initializer.proxyAddress)
         const account = parseAccount(caip2)
         if (!account) throw Error("Could not create account")
-        await this.db.add({
+        const intializer = {
             ...account,
             signers,
             threshold,
@@ -83,16 +86,22 @@ export class FactoryRepository {
             version: "1.3.0",
             initializerTo: initializer.deploymentTx.to!!,
             initializerData: initializer.deploymentTx.data!!
-        })
-        return account
+        }
+        await this.db.add(intializer)
+        console.log(intializer)
+        return intializer
     }
 
-    async getSafeForAccount(account: Account, providerOrSigner?: ethers.providers.Provider | Signer): Promise<Safe> {
+    async getSafeForAccount(account: Account, provider?: ethers.providers.Provider): Promise<Safe> {
+        // TODO refactor with proper fallback
         try {
+            // Check if code is already available
+            const code = await provider?.getCode(account.address)
+            if (!code || code !== "0x") throw Error("Account might already be deployed")
             const initData = await this.db.get(account.id)
             return new CounterfactualSafe(initData)
         } catch {
-            return new DeployedSafe(account.address, providerOrSigner)
+            return new DeployedSafe(account.address, provider)
         }
     }
 }

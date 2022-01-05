@@ -93,7 +93,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
             if (signer && signatures) {
                 try {
                     const submitterAddress = await signer.getAddress()
-                    const safe = await factory.getSafeForAccount(account, signer)
+                    const safe = await factory.getSafeForAccount(account, signer.provider)
                     const status = await safe.status()
                     const signatureBytes = buildSignatureBytes(await prepareSignatures(status, transaction, signatures, submitterAddress))
                     populatedTx = await safe.populateTx({

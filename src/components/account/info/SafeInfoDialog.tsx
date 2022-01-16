@@ -7,6 +7,7 @@ import { Safe, SafeStatus } from '../../../logic/utils/safe'
 import { parseSafeSignature } from '../../../logic/utils/signatures'
 import { Entry, Group, Header, LongText, Row } from '../../../styled/tables'
 import { useAppSettings } from '../../provider/AppSettingsProvider'
+import { useFactoryRepo } from '../../provider/FactoryRepositoryProvider'
 import { useQueueRepo } from '../../provider/QueueRepositoryProvider'
 import AddressInfo from '../../utils/AddressInfo'
 import { useAccount } from '../Dashboard'
@@ -45,6 +46,7 @@ const renderInfo = (safeInfo: SafeStatus): React.ReactNode => {
 
 export const SafeInfoDialog: React.FC<Props> = ({ open, handleClose }) => {
 
+    const factoryRepo = useFactoryRepo()
     const history = useHistory()
     const { loadProvider } = useAppSettings()
     const account = useAccount()
@@ -59,14 +61,14 @@ export const SafeInfoDialog: React.FC<Props> = ({ open, handleClose }) => {
         (async () => {
             try {
                 const provider = loadProvider(account.chainId)
-                const safe = new Safe(account.address, provider)
+                const safe = await factoryRepo.getSafeForAccount(account, provider)
                 setSafeInfo(await safe.status())
             } catch (e) {
                 // TODO show error
                 console.error(e)
             }
         })()
-    }, [account])
+    }, [account, factoryRepo])
 
     return <TxDialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>Safe Info</DialogTitle>

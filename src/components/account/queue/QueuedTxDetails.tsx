@@ -14,10 +14,11 @@ import TxData from '../../utils/TxData';
 import { useAccount } from '../Dashboard';
 import { BigNumber } from '@ethersproject/bignumber';
 import { useAppSettings } from '../../provider/AppSettingsProvider';
-import { Safe } from '../../../logic/utils/safe';
 import { buildSignatureBytes, prepareSignatures } from '../../../logic/utils/execution';
 import { PopulatedTransaction } from '@ethersproject/contracts';
 import AddressInfo from '../../utils/AddressInfo';
+import RelayTxDialog from './RelayTxDialog';
+import { useFactoryRepo } from '../../provider/FactoryRepositoryProvider';
 
 const TxDialog = styled(Dialog)(({ theme }) => ({
     textAlign: "center"
@@ -38,6 +39,8 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
     const [showAddSignature, setShowAddSignature] = useState(false)
     const [showSignTransaction, setShowSignTransaction] = useState(false)
     const [showExecuteTransaction, setShowExecuteTransaction] = useState(false)
+    const [showRelayTransaction, setShowRelayTransaction] = useState(false)
+    const factory = useFactoryRepo()
     const repo = useQueueRepo()
     const account = useAccount()
     const { signer } = useAppSettings()
@@ -90,7 +93,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
             if (signer && signatures) {
                 try {
                     const submitterAddress = await signer.getAddress()
-                    const safe = new Safe(account.address, signer)
+                    const safe = await factory.getSafeForAccount(account, signer.provider)
                     const status = await safe.status()
                     const signatureBytes = buildSignatureBytes(await prepareSignatures(status, transaction, signatures, submitterAddress))
                     populatedTx = await safe.populateTx({
@@ -157,6 +160,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
                         <Button onClick={() => setShowSignTransaction(true)}>Sign</Button>
                         <Button onClick={() => setShowAddSignature(true)}>Add</Button>
                         <Button onClick={() => setShowExecuteTransaction(true)}>Execute</Button>
+                        <Button onClick={() => setShowRelayTransaction(true)}>Relay</Button>
                         <Button onClick={() => deleteTx(id)} color="error">Delete Tx</Button>
                     </Group>
                 ) : (
@@ -171,6 +175,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
         <AddSignatureDialog open={showAddSignature} handleClose={() => setShowAddSignature(false)} handleNewSignature={loadSignatures} safeTxHash={id} />
         <SignTransactionDialog open={showSignTransaction} handleClose={() => setShowSignTransaction(false)} handleNewSignature={loadSignatures} transaction={transaction} />
         <ExecuteTxDialog open={showExecuteTransaction} handleClose={() => setShowExecuteTransaction(false)} handleTxSubmitted={handleClose} transaction={transaction} />
+        <RelayTxDialog open={showRelayTransaction} handleClose={() => setShowRelayTransaction(false)} handleTxSubmitted={handleClose} transaction={transaction} />
     </>
 }
 

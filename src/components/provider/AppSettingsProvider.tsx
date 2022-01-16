@@ -3,6 +3,7 @@ import { TypedDataSigner } from "@ethersproject/abstract-signer"
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { SafeSigner } from "../../logic/account/SafeSigner";
 import { findChainRpc } from "../../logic/utils/chainInfo";
+import { defaultRelay } from "../../logic/config/defaults";
 
 export interface NetworkConfig {
     maxBlocks: number,
@@ -17,6 +18,7 @@ const defaultConfig: NetworkConfig = {
 export interface AppSettings {
     readonly infuraToken: string,
     readonly customRpc: string,
+    readonly relayService: string,
     readonly useCustomRpc: boolean,
     readonly signer: Signer & TypedDataSigner | undefined,
     readonly safeSigner: SafeSigner,
@@ -24,6 +26,7 @@ export interface AppSettings {
     loadProvider: (networkId: number) => providers.JsonRpcProvider | undefined,
     toggleCustomRpc: (value: boolean) => void
     updateCustomRpc: (value: string) => void
+    updateRelayService: (value: string) => void
     updateInfuraToken: (value: string) => void
     updateNetworkConfig: (value: NetworkConfig) => void
 }
@@ -39,6 +42,7 @@ export const useAppSettings = () => {
 export const AppSettingsProvider: React.FC = ({ children }) => {
     const [useCustomRpc, setUseCustomRpc] = useState(localStorage.getItem("app_state_use_rpc") === "true")
     const [customRpc, setCustomRpc] = useState(localStorage.getItem("app_state_rpc") || "")
+    const [relayService, setRelayService] = useState(localStorage.getItem("app_relay_service") || defaultRelay)
     const [infuraToken, setInfuraToken] = useState(localStorage.getItem("app_state_infura_token") || "")
     const [connectedProvider, setConnectedProvider] = useState<any | null>(undefined)
     const storedConfig = localStorage.getItem("app_state_network_config")
@@ -50,6 +54,10 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
     const updateCustomRpc = (value: string) => {
         localStorage.setItem("app_state_rpc", value)
         setCustomRpc(value)
+    }
+    const updateRelayService = (value: string) => {
+        localStorage.setItem("app_relay_service", value)
+        setRelayService(value)
     }
     const updateInfuraToken = (value: string) => {
         localStorage.setItem("app_state_infura_token", value)
@@ -108,8 +116,8 @@ export const AppSettingsProvider: React.FC = ({ children }) => {
     }, [safeSigner, setConnectedProvider])
 
     return <AppSettingsContext.Provider value={{
-        customRpc, useCustomRpc, infuraToken, signer, networkConfig,
-        loadProvider, toggleCustomRpc, updateCustomRpc, updateInfuraToken, updateNetworkConfig,
+        customRpc, useCustomRpc, relayService, infuraToken, signer, networkConfig,
+        loadProvider, toggleCustomRpc, updateCustomRpc, updateRelayService, updateInfuraToken, updateNetworkConfig,
         safeSigner
     }}>
         {children}

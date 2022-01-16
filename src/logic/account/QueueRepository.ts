@@ -1,9 +1,11 @@
 import { providers, Signer, BigNumber } from "ethers";
+import { PopulatedTransaction } from "@ethersproject/contracts";
 import { QueuedInteractionsDAO, QueuedSafeTransaction, TxSignaturesDAO } from "../db/interactions";
-import { SafeTransaction, SafeTransactionSignature } from "../models/transactions";
+import { SafeTransaction, SafeTransactionSignature, SignedSafeTransaction } from "../models/transactions";
 import { Account } from "../utils/account";
 import { buildSignatureBytes, prepareSignatures } from "../utils/execution";
 import { Safe } from "../utils/safe";
+import { FactoryRepository } from "../execution/FactoryRepository";
 
 export interface QueueRepositoryUpdates {
     onNewTx: () => void
@@ -13,14 +15,10 @@ export class QueueRepository {
     callbacks: Set<QueueRepositoryUpdates> = new Set()
     queueDao: QueuedInteractionsDAO
     signaturesDao: TxSignaturesDAO
-    account: Account
-    safe: Safe
 
-    constructor(account: Account, provider?: providers.Provider) {
-        this.account = account
+    constructor(readonly account: Account, readonly factoryRepo: FactoryRepository, readonly provider?: providers.Provider) {
         this.queueDao = new QueuedInteractionsDAO(account.id)
         this.signaturesDao = new TxSignaturesDAO(account.id)
-        this.safe = new Safe(account.address, provider)
     }
 
     registerCallback(callback: QueueRepositoryUpdates) {
@@ -42,7 +40,8 @@ export class QueueRepository {
     }
 
     async addTx(tx: SafeTransaction): Promise<QueuedSafeTransaction> {
-        const hashInfo = await this.safe.getTransactionHash(tx)
+        const safe = await this.factoryRepo.getSafeForAccount(this.account, this.provider)
+        const hashInfo = await safe.getTransactionHash(tx)
         const queuedTx = {
             id: hashInfo.hash,
             version: hashInfo.version,
@@ -63,7 +62,8 @@ export class QueueRepository {
     }
 
     async getQueuedTxs(): Promise<QueuedSafeTransaction[]> {
-        const nonce = await this.safe.nonce()
+        const safe = await this.factoryRepo.getSafeForAccount(this.account, this.provider)
+        const nonce = await safe.nonce()
         return this.queueDao.getAll(nonce.toNumber())
     }
 
@@ -72,7 +72,8 @@ export class QueueRepository {
         if (queuedTxs.length > 0) {
             return BigNumber.from(queuedTxs[queuedTxs.length - 1].nonce).add(1).toString()
         }
-        return (await this.safe.nonce()).toString()
+        const safe = await this.factoryRepo.getSafeForAccount(this.account, this.provider)
+        return (await safe.nonce()).toString()
     }
 
     async getSignatures(hash: string): Promise<SafeTransactionSignature[]> {
@@ -83,17 +84,30 @@ export class QueueRepository {
         await this.signaturesDao.add(signature)
     }
 
-    async submitTx(tx: QueuedSafeTransaction, submitter: Signer, signatures: SafeTransactionSignature[]): Promise<string> {
-        const writableSafe = this.safe.writable(submitter)
-        const status = await this.safe.status()
+    async signedTx(tx: QueuedSafeTransaction, signatures: SafeTransactionSignature[], submitterAddress?: string): Promise<SignedSafeTransaction> {
+        const safe = await this.factoryRepo.getSafeForAccount(this.account, this.provider)
+        const status = await safe.status()
         if (status.nonce.toNumber() !== tx.nonce) throw Error(`Unexpected nonce! Expected ${status.nonce} got ${tx.nonce}`)
-        const submitterAddress = await submitter.getAddress()
         const signatureBytes = buildSignatureBytes(await prepareSignatures(status, tx, signatures, submitterAddress))
-        const signedTx = {
+        return {
             signatures: signatureBytes,
             ...tx
         }
+    }
+
+    async submitTx(tx: QueuedSafeTransaction, submitter: Signer, signatures: SafeTransactionSignature[]): Promise<string> {
+        const safe = await this.factoryRepo.getSafeForAccount(this.account, this.provider)
+        const writableSafe = safe.writable(submitter)
+        await writableSafe.initialize()
+        const submitterAddress = await submitter.getAddress()
+        const signedTx = await this.signedTx(tx, signatures, submitterAddress)
         return writableSafe.executeTx(signedTx)
+    }
+
+    async populateTx(tx: QueuedSafeTransaction, signatures: SafeTransactionSignature[]): Promise<PopulatedTransaction> {
+        const signedTx = await this.signedTx(tx, signatures)
+        const safe = await this.factoryRepo.getSafeForAccount(this.account, this.provider)
+        return await safe.populateTx(signedTx)
     }
 
 }

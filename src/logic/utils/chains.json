@@ -39,10 +39,10 @@
         "infoURL": "https://optimism.io"
     },
     {
-        "name": "xDAI Chain",
+        "name": "Gnosis Chain",
         "chainId": 100,
-        "shortName": "xdai",
-        "chain": "XDAI",
+        "shortName": "gno",
+        "chain": "Gnosis",
         "network": "mainnet",
         "networkId": 100,
         "nativeCurrency": {

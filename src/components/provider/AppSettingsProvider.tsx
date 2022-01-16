@@ -3,6 +3,7 @@ import { TypedDataSigner } from "@ethersproject/abstract-signer"
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { SafeSigner } from "../../logic/account/SafeSigner";
 import { findChainRpc } from "../../logic/utils/chainInfo";
+import { defaultRelay } from "../../logic/config/defaults";
 
 export interface NetworkConfig {
     maxBlocks: number,
@@ -41,7 +42,7 @@ export const useAppSettings = () => {
 export const AppSettingsProvider: React.FC = ({ children }) => {
     const [useCustomRpc, setUseCustomRpc] = useState(localStorage.getItem("app_state_use_rpc") === "true")
     const [customRpc, setCustomRpc] = useState(localStorage.getItem("app_state_rpc") || "")
-    const [relayService, setRelayService] = useState(localStorage.getItem("app_relay_service") || "")
+    const [relayService, setRelayService] = useState(localStorage.getItem("app_relay_service") || defaultRelay)
     const [infuraToken, setInfuraToken] = useState(localStorage.getItem("app_state_infura_token") || "")
     const [connectedProvider, setConnectedProvider] = useState<any | null>(undefined)
     const storedConfig = localStorage.getItem("app_state_network_config")

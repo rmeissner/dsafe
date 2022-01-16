@@ -6,10 +6,18 @@ import { CounterfactualSafe, DeployedSafe, Safe } from '../utils/safe';
 
 const relayProtocol: Record<string, {module: string, lib: string}> = {
     "4": {
-        module: "0xBF44ecCd8725106b102d754B52c8fBd555D86652",
-        lib: "0x75F078CF81E5fE33b11947f7C5F7271F8f2008Ce"
+        module: "0x35A8d3A9e036311CF3E37D520399A89221156Afb",
+        lib: "0xD70e1eBB07d2b00715D189FDd54e0Ef39A05d9f8"
+    },
+    "100": {
+        module: "0x35A8d3A9e036311CF3E37D520399A89221156Afb",
+        lib: "0xD70e1eBB07d2b00715D189FDd54e0Ef39A05d9f8"
     }
 }
+
+const libInterface = new ethers.utils.Interface([
+    "function enableModules(address[] modules) public"
+])
 
 export class FactoryRepository {
 
@@ -19,20 +27,18 @@ export class FactoryRepository {
         this.db = new AccountInitializerDAO()
     }
 
-    async availableRelayNetworks(): Promise<string[]> {
-        const deployments = getProxyFactoryDeployment()
-        if (!deployments || !deployments.networkAddresses) return []
-        return Object.keys(deployments?.networkAddresses)
+    supportsRelaying(chainId: string): boolean {
+        return relayProtocol[chainId] !== undefined
     }
 
-    createSetupInitData(safeContract: ethers.Contract, chainId: string, relaySupport: boolean) {
+    createSetupInitData(chainId: string, relaySupport: boolean) {
         if (!relaySupport || !relayProtocol[chainId]) return {
             to: ethers.constants.AddressZero,
             data: "0x"
         }
         return {
             to: relayProtocol[chainId].lib,
-            data: safeContract.interface.encodeFunctionData("enableModule", [relayProtocol[chainId].module])
+            data: libInterface.encodeFunctionData("enableModules", [[relayProtocol[chainId].module]])
         }
     }
 
@@ -51,8 +57,8 @@ export class FactoryRepository {
         const fallbackHandlerDeployment = getFallbackHandlerDeployment({ network: chainId })
         const fallbackHandlerAddress = fallbackHandlerDeployment?.networkAddresses?.[chainId] ?? ethers.constants.AddressZero
 
-        const useRelaySupport = relaySupport ?? (await this.availableRelayNetworks()).indexOf(chainId) >= 0
-        const { to: initTo, data: initData } = this.createSetupInitData(safeContract, chainId, useRelaySupport)
+        const useRelaySupport = relaySupport ?? this.supportsRelaying(chainId)
+        const { to: initTo, data: initData } = this.createSetupInitData(chainId, useRelaySupport)
 
         const setupData = (await safeContract.populateTransaction.setup(
             signers, threshold, initTo, initData, fallbackHandlerAddress, ethers.constants.AddressZero, 0, ethers.constants.AddressZero

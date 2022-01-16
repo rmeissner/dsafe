@@ -18,7 +18,7 @@ export class RelayRepository {
         const executor = account.address
         const chainId = account.chainId
         const initializer = await this.db.get(account.id)
-        const resp = await axios.post(this.relayUrl, {
+        const resp = await axios.post(`${this.relayUrl}/relay`, {
             chainId,
             executor,
             data,

@@ -1,1 +1,1 @@
-export const defaultRelay = "https://relay-module-service.herokuapp.com/"
+export const defaultRelay = "https://relay-module-service.herokuapp.com"

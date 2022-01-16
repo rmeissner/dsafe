@@ -17,15 +17,16 @@ export class RelayRepository {
     async relayTransaction(account: Account, data: string) {
         const executor = account.address
         const chainId = account.chainId
-        const initializer = await this.db.get(account.id)
+        const storedInitializer = await this.db.get(account.id)
+        const initializer = storedInitializer ? {
+            to: storedInitializer.initializerTo,
+            data: storedInitializer.initializerData
+        } : undefined
         const resp = await axios.post(`${this.relayUrl}/relay`, {
             chainId,
             executor,
             data,
-            initializer: {
-                to: initializer?.initializerTo,
-                data: initializer?.initializerData
-            }
+            initializer
         })
         return resp.data.id
     }

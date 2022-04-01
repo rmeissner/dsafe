@@ -43,9 +43,9 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
     const factory = useFactoryRepo()
     const repo = useQueueRepo()
     const account = useAccount()
-    const { signer } = useAppSettings()
+    const { signer, loadProvider } = useAppSettings()
 
-    const deleteTx = useCallback(async(id?: string) => {
+    const deleteTx = useCallback(async (id?: string) => {
         if (!id) return
         try {
             await repo.deleteTx(id)
@@ -90,20 +90,27 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
         }
         (async () => {
             let populatedTx: PopulatedTransaction | undefined
-            if (signer && signatures) {
+            try {
+                const provider = loadProvider(account.chainId)
+                const safe = await factory.getSafeForAccount(account, provider)
+                const status = await safe.status()
+                let submitterAddress;
+                let signatureBytes;
                 try {
-                    const submitterAddress = await signer.getAddress()
-                    const safe = await factory.getSafeForAccount(account, signer.provider)
-                    const status = await safe.status()
-                    const signatureBytes = buildSignatureBytes(await prepareSignatures(status, transaction, signatures, submitterAddress))
-                    populatedTx = await safe.populateTx({
-                        signatures: signatureBytes,
-                        ...transaction
-                    })
-                    populatedTx.from = submitterAddress
-                } catch (e) {
-                    console.error(e)
+                    submitterAddress = await signer?.getAddress()
+                    signatureBytes = buildSignatureBytes(await prepareSignatures(status, transaction, signatures || [], submitterAddress))
+                } catch {
+                    submitterAddress = status.owners[0]
+                    status.threshold = BigNumber.from(1)
+                    signatureBytes = buildSignatureBytes(await prepareSignatures(status, transaction, signatures || [], submitterAddress))
                 }
+                populatedTx = await safe.populateTx({
+                    signatures: signatureBytes,
+                    ...transaction
+                })
+                populatedTx.from = submitterAddress
+            } catch (e) {
+                console.error(e)
             }
             try {
                 let link = "https://dashboard.tenderly.co/simulator/new?"
@@ -113,11 +120,22 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
                     link += "contractAddress=" + populatedTx.to + "&"
                     link += "rawFunctionInput=" + populatedTx.data + "&"
                     link += "value=" + BigNumber.from(populatedTx.value || "0").toString() + "&"
+                    link += "stateOverrides=" + encodeURIComponent(JSON.stringify([
+                        {
+                            contractAddress: populatedTx.to,
+                            storage: [
+                                {
+                                    key: "0x0000000000000000000000000000000000000000000000000000000000000004",
+                                    value: "0x0000000000000000000000000000000000000000000000000000000000000001"
+                                }
+                            ]
+                        }
+                    ]))
                 } else {
                     link += "from=" + account.address + "&"
                     link += "contractAddress=" + transaction.to + "&"
                     link += "rawFunctionInput=" + transaction.data + "&"
-                    link += "value=" + BigNumber.from(transaction.value).toString() + "&"
+                    link += "value=" + BigNumber.from(transaction.value).toString()
                 }
                 setSimulateLink(link)
             } catch (e) {

@@ -1,4 +1,5 @@
 import { arrayify } from "@ethersproject/bytes";
+import { equal } from "assert";
 import { ethers } from "ethers";
 import { QueuedSafeTransaction } from "../db/interactions";
 import { SafeTransactionSignature } from "../models/transactions";
@@ -6,19 +7,20 @@ import { SafeStatus } from "./safe";
 import { buildPreValidatedSignature } from "./signatures";
 
 export const prepareSignatures = async (status: SafeStatus, tx: QueuedSafeTransaction, signatures: SafeTransactionSignature[], submitterAddress?: string): Promise<SafeTransactionSignature[]> => {
+    const submitterIsOwner = submitterAddress && status.owners.indexOf(submitterAddress) >= 0
+    const requiredSigntures = submitterIsOwner ? status.threshold.sub(1) : status.threshold
+    const signatureArray = []
+    if (submitterIsOwner) {
+        signatureArray.push(await buildPreValidatedSignature(submitterAddress, tx))
+    }
+    if (requiredSigntures.eq(0)) return signatureArray
     const signatureMap = new Map<String, SafeTransactionSignature>()
     for (const signature of signatures) {
         if (status.owners.indexOf(signature.signer) < 0) continue
         if (submitterAddress === signature.signer || signatureMap.has(signature.signer)) continue
         signatureMap.set(signature.signer, signature)
     }
-    const submitterIsOwner = submitterAddress && status.owners.indexOf(submitterAddress) >= 0
-    const requiredSigntures = submitterIsOwner ? status.threshold.sub(1) : status.threshold
     if (requiredSigntures.toNumber() > signatureMap.size) throw Error(`Not enough signatures (${signatureMap.size} of ${requiredSigntures})`)
-    const signatureArray = []
-    if (submitterIsOwner) {
-        signatureArray.push(await buildPreValidatedSignature(submitterAddress, tx))
-    }
     return signatureArray.concat(Array.from(signatureMap.values()).slice(0, requiredSigntures.toNumber()))
 }
 

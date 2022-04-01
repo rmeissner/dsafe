@@ -84,7 +84,7 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
         loadSignatures()
     }, [loadSignatures])
     useEffect(() => {
-        if (!transaction || transaction.operation !== 0) {
+        if (!transaction) {
             setSimulateLink(undefined)
             return
         }
@@ -131,15 +131,18 @@ export const QueuedTxDetails: React.FC<Props> = ({ id, handleClose }) => {
                             ]
                         }
                     ]))
-                } else {
+                } else if (transaction.operation === 0) {
                     link += "from=" + account.address + "&"
                     link += "contractAddress=" + transaction.to + "&"
                     link += "rawFunctionInput=" + transaction.data + "&"
                     link += "value=" + BigNumber.from(transaction.value).toString()
+                } else {
+                    throw Error("Not enough information to simulate tx")
                 }
                 setSimulateLink(link)
             } catch (e) {
                 console.error(e)
+                setSimulateLink(undefined)
             }
         })()
     }, [transaction, account, signer, repo, signatures])

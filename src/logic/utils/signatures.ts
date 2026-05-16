@@ -101,14 +101,16 @@ export const parseSignatureType = (signature: string): SafeSignatureType => {
 
 export const getEIP712Domain = (version: string, account: Account): TypedDataDomain => {
     switch (version) {
-        case "1.3.0": {
+        case "0.1.0": 
+        case "1.0.0": 
+        case "1.1.0": {
+            return { verifyingContract: account.address }
+        }
+        default: {
             return {
                 verifyingContract: account.address,
                 chainId: account.chainId
             }
-        }
-        default: {
-            return { verifyingContract: account.address }
         }
     }
 }
